@@ -24,7 +24,7 @@ package Data::FormValidator::Constraints;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = 3.50;
+$VERSION = 3.63;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -156,10 +156,12 @@ address would pass the test :
 sub match_email {
     my $email = shift;
 
-    if ($email =~ /^([\040-\176]+\@[-A-Za-z0-9.]+\.[A-Za-z]+)$/) {
-	return $1;
+    if ($email =~ /^(([a-z0-9_\.\+\-\=\?\^\#]){1,64}\@(([a-z0-9\-]){1,251}\.){1,252}[a-z0-9]{2,4})$/i) {
+	    return $1;
     }
-    else { return undef; }
+    else { 
+        return undef; 
+    }
 }
 
 my $state = <<EOF;

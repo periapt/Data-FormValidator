@@ -22,7 +22,7 @@ t/06_regexp_map.t
 t/07_missing_optional.t
 t/08_profile_checking.t
 t/09_require_some.t
-t/10_procedural_valid.t
+t/procedural_valid.t
 t/11_procedural_match.t
 t/12_untaint.pl
 t/12_untaint.t
@@ -50,6 +50,9 @@ t/upload_post_text.txt
 t/30_filter_definedness.t
 t/constraints_builtin.t 
 t/constraints_reuse.t
-t/dependency_groups.t
 test/00_base.badformat
 test/00_base.profile
+t/check_profile_syntax.t
+t/unknown.t
+
+

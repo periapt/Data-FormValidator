@@ -3,7 +3,7 @@ use strict;
 
 $^W = 1;
 
-use Test::More tests => 26;
+use Test::More qw/no_plan/;
 
 use Data::FormValidator qw(:validators :matchers);
 
@@ -68,5 +68,29 @@ $i++;
     ok($@) or
       diag sprintf("%-25s", "Fake Valid Routine");
 }
+
+ok(! valid_email('pretty_b;ue_eyes16@cpan.org'), 'semi-colons in e-mail aren\'t valid');
+ok(! valid_email('Ollie 102@cpan.org'), 'spaces in e-mail aren\'t valid');
+
+my $address_1 = 'mark';
+isnt($address_1, valid_email($address_1), "'$address_1' is not a valid e-mail");
+
+my $address_2 = 'Mark Stosberg <mark@summersault.com>';
+ok(! valid_email($address_2), "'$address_2' is not a valid e-mail");
+
+my $address_3 = 'mark@summersault.com';
+ok(valid_email($address_3), "'$address_3' is a valid e-mail");
+
+my $address_6 = 'Mark.Stosberg@summersault.com';
+ok(valid_email($address_6), "'$address_6' is a valid e-mail");
+
+my $address_7 = 'Mark_Stosberg@summersault.com';
+ok(valid_email($address_7), "'$address_7' is a valid e-mail");
+
+
+
+
+
+
 
 
