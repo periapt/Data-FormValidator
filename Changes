@@ -1,5 +1,13 @@
 Revision history for Perl extension Data::FormValidator.
 
+1.92 Sun Dec 22 2002
+    - support for untainting data (Tony Stubblebine)
+	- documentation typo fixes (Charlie Garrison)
+	- validator_packages added to profile specification
+	  allowing import of validation routine from other packages (Jeremy Muhlich)
+	- support for multiple constraints per field added (Jeremy Muhlich)
+	- support for literal values in constraint param field (Jeremy Muhlich)
+
 1.91 Sun Oct 05 2002
 	- Added feature to require some fields in a group. (Brad Smithart)
 	- Bumped version to be greater than 1.9 to make CPAN.pm fetching work again

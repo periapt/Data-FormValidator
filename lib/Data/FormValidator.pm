@@ -23,9 +23,9 @@
 #    $Header: /cvsroot/cascade/dfv/lib/Data/FormValidator.pm,v 1.3 2001/11/03 18:09:46 markjugg Exp $
 package Data::FormValidator;
 
-use vars qw( $VERSION );
+use vars qw( $VERSION $AUTOLOAD);
 
-$VERSION = '1.91';
+$VERSION = '1.92';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -60,6 +60,19 @@ require Exporter;
 	valid_state_or_province
 	valid_zip
 	valid_zip_or_postcode
+	match_american_phone
+	match_cc_exp
+	match_cc_number
+	match_cc_type
+	match_email
+	match_ip_address
+	match_phone
+	match_postcode
+	match_province
+	match_state
+	match_state_or_province
+	match_zip
+	match_zip_or_postcode	
 );
 
 %EXPORT_TAGS = (
@@ -97,10 +110,44 @@ require Exporter;
 	valid_zip
 	valid_zip_or_postcode
 /],
+    matchers => [qw/
+	match_american_phone
+	match_cc_exp
+	match_cc_number
+	match_cc_type
+	match_email
+	match_ip_address
+	match_phone
+	match_postcode
+	match_province
+	match_state
+	match_state_or_province
+	match_zip
+	match_zip_or_postcode
+/],		
 );
 
 use strict;
 use Carp; # generate better errors with more context
+use Symbol;
+
+
+sub AUTOLOAD {
+    my $name = $AUTOLOAD;
+
+    # Since all the valid_* routines are essentially identical we're
+    # going to generate them dynamically from match_ routines with the same names.
+    if ($name =~ m/^(.*::)valid_(.*)/) {
+		no strict qw/refs/;
+		return defined &{$1.'match_' . $2}(@_);
+    }
+    else { 
+		die "subroutine '$name' not found"; 
+	}
+}
+
+sub DESTROY {}
+
 =pod
 
 =head1 NAME
@@ -199,8 +246,7 @@ Here is an example of a valid input profiles specification :
 		require_some => {
 			# require any two fields from this group
 			city_or_state_or_zipcode [ 2, qw/city state zipcode/ ], 
-		},
-			
+		},	
 	    constraints  =>
 		{
 		    email	=> "email",
@@ -209,9 +255,10 @@ Here is an example of a valid input profiles specification :
 		    zipcode	=> '/^\s*\d{5}(?:[-]\d{4})?\s*$/',
 		    state	=> "state",
 		},
+        untaint_constraint_fields => [qw(zipcode state)],
 	    constraint_regexp_map => {
 		'/_postcode$/'	=> 'postcode',
-		'/_province$/'  => 'province,		      
+		'/_province$/'  => 'province',		      
 	    },			      
             dependency_groups  => {
                 password_group => [qw/password password_confirmation/]
@@ -228,13 +275,15 @@ Here is an example of a valid input profiles specification :
                 check => [ qw( check_no ) ],
              }
 	     },
+             untaint_all_constraints => 1,
 	     constraints => {
-		cc_no      => {  constraint  => "cc_number",
-				 params	     => [ qw( cc_no cc_type ) ],
-				},
-		cc_type	=> "cc_type",
-		cc_exp	=> "cc_exp",
-	      }
+			cc_no      => {  
+				constraint  => "cc_number",
+				params	    => [ qw( cc_no cc_type ) ],
+			},
+			cc_type	=> "cc_type",
+			cc_exp	=> "cc_exp",
+	      },
 	    filters       => [ "trim" ],
 	    field_filters => { cc_no => "digit" },
 	    field_filter_regexp_map => {
@@ -350,18 +399,51 @@ and the value "ucfirst".
 
 This is a reference to an hash which contains the constraints that
 will be used to check whether or not the field contains valid data.
-Constraints can be either the name of a builtin constraint function
-(see below), a perl regexp or an anonymous subroutine which will check
-the input and return true or false depending on the input's validity.
+The keys in this hash are the field names. The values can any of the following:
 
-The constraint function takes one parameter, the input to be validated
-and returns true or false. It is possible to specify the parameters
-that will be passed to the subroutine. For that, use an hash reference
-which contains in the I<constraint> element, the anonymous subroutine
-or the name of the builtin and in the I<params> element the name of
-the fields to pass a parameter to the function. (Don't forget to
-include the name of the field to check in that list!) For an example,
-look at the I<cc_no> constraint example.
+=over 
+
+=item o
+
+the name of a builtin constraint function (see below)
+
+B<Example>: 
+
+	my_zipcode_field 	=> 'zip',
+
+=item o 
+
+a perl regular expression
+
+B<Example>: 
+
+	my_zipcode_field   => '/^\d{5}$/', # match exactly 5 digits
+
+=item o
+
+a subroutine reference
+
+This will check the input and return true or false depending on the input's validity.
+By default, the constraint function takes one parameter, the field to be
+validated.  To validate a field based more inputs than just the field itself,
+see C<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
+
+
+B<Examples>:
+
+	my_zipcode_field => sub { my $val = shift;  return $val =~ '/^\d{5}$/' }, 
+	
+	# OR you can reference a subroutine, which should work like the one above
+	my_zipcode_field => \&my_validation_routine, 
+
+=item o 
+
+an array reference
+
+An array reference is used to apply multiple constraints to a single
+field. See L<MULTIPLE CONSTRAINTS> below.
+
+=back
 
 =item constraint_regexp_map
 
@@ -372,13 +454,100 @@ you could check to see that all fields that end in "_postcode" are
 valid Canadian postal codes by using the key '_postcode$' and the
 value "postcode".
 
+=item untaint_all_constraints
+
+If this field is set all form data that passes a constraint will be
+untainted. The untainted data will be returned in the valid
+hash. Untainting is based on the pattern match used by the
+constraint. If you write your own regular expressions and only match
+part of the string then you'll only get part of the string in the
+valid hash. It is a good idea to write you own constraints like
+/^regex$/. That way you match the whole string.
+
+This is overridden by untaint_constraint_fields
+
+=item untaint_constraint_fields
+
+Specifies that one or more fields will be untainted if they pass their
+constraint(s). This can be set to a single field name or an array
+reference of field names. The untainted data will be returned in the
+valid hash. Untainting is based on the pattern match used by the
+constraint. If you write your own regular expressions and only match
+part of the string then you'll only get part of the string in the
+valid hash. It is a good idea to write you own constraints like
+/^regex$/. That way you match the whole string.
+
+This is overrides the untaint_all_constraints flag.
+
 =item missing_optional_valid
 
 This can be set to a true value (such as 1) to cause missing optional
 fields to be included in the valid hash. By default they are not
 included-- this is the historical behavior. 
 
+item validator_packages 
+
+This key is used to define other packages which contain validation routines. 
+Set this key to a single package name, or an arrayref of several. All of its
+subs beginning with 'valid_' will be imported into Data::FormValidator.
+This lets you reference them in a constraint with just their name (the part
+after the underscore).  You can even override the provided validators.
+
+B<Example>:
+
+	validator_packages => [qw(ProjectName::Validate::Basic)],
+
 =back
+
+=head1 VALIDATING INPUT BASED ON MULTIPLE FIELDS
+
+You can pass more than one value into a validation routine. 
+For that, the value of the constraint should be a 
+a hash reference. One key should named C<constraint> and should have a value 
+set to the reference of the subroutine or the name of a built-in validator.
+Another required key is I<params>. The value of the I<params> key is a
+reference to an array of the other elements to use in the validation. If the
+element is a scalar, it is assumed to a field name. If the value is a reference,
+what the reference points to is passed into the subroutine. 
+(Don't forget to include the name of the field to check in that list!)
+
+B<Example>:
+
+		cc_no  => {  
+			constraint  => "cc_number",
+			params	     => [ qw( cc_no cc_type ) ],
+		},
+
+
+=head1 MULTIPLE CONSTRAINTS
+
+Multiple constraints can be applied to a single field by defining
+the value of the constraint to be an array reference. Each of the values in this array
+can be one of the constraint types defined above: the name of a built-in validator, 
+a regular expression, or a subroutine reference. 
+
+It's important to know which of the constraints failed, so fields defined
+with multiple constraints will have an array ref returned in the C<@invalids>
+array instead of just a string. The first element in this array is the
+name of the field, and the remaining fields are the names of the failed
+constraints. 
+
+When using multiple constraints it is important to return the name of the
+constraint that failed so you can distinquish between them. To do that,
+either use a named constraint, or use the hash ref method of defining a
+constraint and include a C<name> key with a value set to the name of your
+constraint.  Here's an example:
+
+  my_zipcode_field => [
+  	'zip',
+	{ 
+		constraint =>  '/^406/', 
+		name 	   =>  'starts_with_406',
+	}
+	],
+
+You can use an array reference with a single constraint in it if you just want
+to have the name of your failed constraint returned in the above fashion. 
 
 =cut
 
@@ -471,20 +640,39 @@ sub validate {
 
 	# check the profile syntax or die with an error. 
 	_check_profile_syntax($profile);
-
+    
     # Copy data and assumes that all is valid
     my %valid	    = %$data;
     my @missings    = ();
     my @invalid	    = ();
     my @unknown	    = ();
 
+    # import valid_* subs from requested packages
+    foreach my $package (_arrayify($profile->{validator_packages})) {
+	if ( !exists $self->{imported_validators}{$package} ) {
+	    eval "require $package";
+	    if ($@) {
+		die "Couldn't load validator package '$package': $@";
+	    }
+	    my $package_ref = qualify_to_ref("${package}::");
+	    my @subs = grep(/^(valid_|match_)/, keys(%{*{$package_ref}}));
+		foreach my $sub (@subs) {
+			# is it a sub? (i.e. make sure it's not a scalar, hash, etc.)
+			my $subref = *{qualify_to_ref("${package}::$sub")}{CODE};
+			if (defined $subref) {
+				*{qualify_to_ref($sub)} = $subref;
+			}
+		}
+	    $self->{imported_validators}{$package} = 1;
+	}
+    }
+
      # Apply inconditional filters
     foreach my $filter (_arrayify($profile->{filters})) {
 		if (defined $filter) {
 			# Qualify symbolic references
-			$filter = ref $filter ? $filter : "filter_" . $filter;
+			$filter = ref $filter ? $filter : *{qualify_to_ref("filter_$filter")}{CODE};
 			foreach my $field ( keys %valid ) {
-				no strict 'refs';
 				$valid{$field} = $filter->( $valid{$field} );
 			}
 		}	
@@ -495,9 +683,7 @@ sub validate {
 		foreach my $filter ( _arrayify($filters)) {
 			if (defined $filter) {
 				# Qualify symbolic references
-				$filter = ref $filter ? $filter : "filter_" . $filter;
-				no strict 'refs';
-		
+				$filter = ref $filter ? $filter : *{qualify_to_ref("filter_$filter")}{CODE};
 				$valid{$field} = $filter->( $valid{$field} );
 			}	
 		}
@@ -551,7 +737,7 @@ sub validate {
 
 	
 	# Remove all empty fields
-	foreach my $field ( keys %valid ) {
+	foreach my $field (keys %valid) {
 		delete $valid{$field} unless length $valid{$field};
 	}
 
@@ -619,59 +805,127 @@ sub validate {
 
     # add in the constraints from the regexp map 
     foreach my $re (keys %{ $profile->{constraint_regexp_map} }) {
-       my $sub = eval 'sub { $_[0] =~ '. $re . '}';
+	my $sub = eval 'sub { $_[0] =~ '. $re . '}';
        die "Error compiling regular expression $re: $@" if $@;
 
        # find all the keys that match this RE and add a constraint for them
        map { $profile->{constraints}{$_} = $profile->{constraint_regexp_map}{$re} }
-	 grep { $sub->($_) } (keys %valid);
+	 grep { $sub->($_) } (keys %valid);	
     }
-
+ 
     # Check constraints
-    while ( my ($field,$constraint_spec) = each %{$profile->{constraints}} ) {
-		my ($constraint,@params);
-		if ( ref $constraint_spec eq "HASH" ) {
-			$constraint = $constraint_spec->{constraint};
-			foreach my $fname ( _arrayify($constraint_spec->{params})  ) {
-			push @params, $valid{$fname};
-			}
-		} else {
-			$constraint = $constraint_spec;
-			@params     = ( $valid{$field} );
-		}
-		next unless exists $valid{$field};
 
-		unless ( ref $constraint ) {
-			# Check for regexp constraint
-			if ( $constraint =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ ) {
-				my $sub = eval 'sub { $_[0] =~ '. $constraint . '}';
-				die "Error compiling regular expression $constraint: $@" if $@;
-				$constraint = $sub;
-				# Cache for next use
-				if ( ref $constraint_spec eq "HASH" ) {
-					$constraint_spec->{constraint} = $sub;
-				} else {
-					$profile->{constraints}{$field} = $sub;
-				}
-			} else {
-				# Qualify symbolic reference
-				$constraint = "valid_" . $constraint;
-			}
-		}
-		no strict 'refs';
+    #Decide which fields to untaint
+    my ($untaint_all, %untaint_hash);
+    if (defined($profile->{untaint_constraint_fields})) {
+	if (ref $profile->{untaint_constraint_fields} eq "ARRAY") {
+	    foreach my $field (@{$profile->{untaint_constraint_fields}}) {
+		$untaint_hash{$field} = 1;
+	    }
+	}
+	elsif ($valid{$profile->{untaint_constraint_fields}}) {
+	    $untaint_hash{$profile->{untaint_constraint_fields}} = 1;
+	}
+    }
+    elsif ((defined($profile->{untaint_all_constraints}))
+	   && ($profile->{untaint_all_constraints} == 1)) {
+	$untaint_all = 1;
+    }
+    
+    while ( my ($field,$constraint_list) = each %{$profile->{constraints}} ) {
+       my (@invalid_list);
+       my $is_list = 1;
 
-		unless ( $constraint->( @params ) ) {
+       next unless exists $valid{$field};
+
+       if ( ref $constraint_list ne "ARRAY" ) {
+          # transform into an arrayref so we can iterate below
+          $constraint_list = [$constraint_list];
+          $is_list = undef;
+       }
+
+       foreach my $constraint_spec (@$constraint_list) {
+	   my ($constraint,$constraint_name,@params);
+	   $constraint = $constraint_name = $constraint_spec;
+	   @params = ( $valid{$field} );
+	   
+	   if ( ref $constraint_spec eq "HASH" ) {
+	       $constraint = $constraint_name = $constraint_spec->{constraint};
+	       if (exists $constraint_spec->{params}) {
+		   @params = ();
+		   foreach my $fname ( _arrayify($constraint_spec->{params})  ) {
+		       if (ref $fname) {
+			   push @params, $fname;
+		       } else {
+			   push @params, $valid{$fname};
+		      }
+		   }
+	       }
+	       if ( exists $constraint_spec->{name} ) {
+		   $constraint_name = $constraint_spec->{name};
+	       }
+	   }
+
+	   unless ( ref $constraint ) {
+	       # Check for regexp constraint
+	       if ( $constraint =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ ) {
+		   #If untainting return the match otherwise return result of match
+		   my $return_code = ($untaint_all || $untaint_hash{$field}) ? 'return $&;' : "";
+		   
+		   my $sub = eval 'sub { $_[0] =~ '. $constraint . ';'
+		       . $return_code . '}';
+		   die "Error compiling regular expression $constraint: $@" if $@;
+		   $constraint = $sub;
+		   # Cache for next use
+		   if ( ref $constraint_spec eq "HASH" ) {
+		       $constraint_spec->{constraint} = $sub;
+		   } else {
+		       $profile->{constraints}{$field} = $sub;
+		   }
+	       } else {
+		   # Qualify symbolic reference
+		   
+		   #If untaint is turned on call match_* sub directly. 
+		   if ($untaint_all || $untaint_hash{$field}) {
+		       $constraint = *{qualify_to_ref("match_$constraint")}{CODE};
+		   }
+		   else {
+		       my $routine = 'match_' . $constraint;
+		       $constraint = sub { no strict qw/refs/;
+					   return defined &{$routine}(@_)};
+		   }
+	       }
+	   }
+	  
+	  my ($match);
+	  if ($match = $constraint->( @params )) { 
+	      if ($untaint_all || $untaint_hash{$field}) {
+		  #Replace the field value with whatever was matched with the constraint
+		  $valid{$field} = $match; 
+	      }
+	  }
+	  else {
+	      if ($is_list) {
+		  push @invalid_list, $constraint_name;
+	      } else {
 			delete $valid{$field};
 			push @invalid, $field;
 		}
-	}
+	  }
+      }
+
+      if ($is_list and @invalid_list) {
+         delete $valid{$field};
+         push @invalid, [$field, @invalid_list];
+      }
+   }
 
     # add back in missing optional fields from the data hash if we need to
     foreach my $field ( keys %$data ) {
 		if ($profile->{missing_optional_valid} and $optional{$field} and (not exists $valid{$field})) {
 			 $valid{$field} = undef;
 		 }
-    }
+	    }
 
     return ( \%valid, \@missings, \@invalid, \@unknown );
 }
@@ -993,6 +1247,23 @@ example, if you want to access the I<email> validator directly, you could either
 Notice that when you call validators directly, you'll need to prefix the validator name with
 "valid_" 
 
+Each validator also has a version that returns the untainted value if
+the validation succeeded. You may call these functions directly
+through the procedural interface by either importing them directly or
+importing the I<:matchers> group. For example if you want to untaint a
+value with the I<email> validator directly you may:
+
+    if ($email = match_email($email)) {
+        system("echo $email");
+    }
+    else {
+        die "Unable to validate email";
+    }
+
+Notice that when you call validators directly and want them to return an
+untainted value, you'll need to prefix the validator name with "match_" 
+
+
 =over
 
 =item email
@@ -1012,10 +1283,13 @@ address would pass the test :
 # MiniVend 3.14. (http://www.minivend.com)
 # Copyright 1996-1999 by Michael J. Heins <mike@heins.net>
 
-sub valid_email {
+sub match_email {
     my $email = shift;
 
-    return $email =~ /[\040-\176]+\@[-A-Za-z0-9.]+\.[A-Za-z]+/;
+    if ($email =~ /^[\040-\176]+\@[-A-Za-z0-9.]+\.[A-Za-z]+$/) {
+	return $&;
+    }
+    else { return undef; }
 }
 
 my $state = <<EOF;
@@ -1037,8 +1311,10 @@ province.
 
 =cut
 
-sub valid_state_or_province {
-    return valid_state(@_) || valid_province(@_);
+sub match_state_or_province {
+    my $match;
+    if ($match = match_state(@_)) { return $match; }
+    else {return match_province(@_); }
 }
 
 =pod
@@ -1050,9 +1326,12 @@ american state.
 
 =cut
 
-sub valid_state {
+sub match_state {
     my $val = shift;
-    return $state =~ /\b$val\b/i;
+    if ($state =~ /\b($val)\b/i) {
+	return $1;
+    }
+    else { return undef; }
 }
 
 =pod
@@ -1064,9 +1343,12 @@ abbreviation.
 
 =cut
 
-sub valid_province {
+sub match_province {
     my $val = shift;
-    return $province =~ /\b$val\b/i;
+    if ($province =~ /\b($val)\b/i) {
+	return $1;
+    }
+    else { return undef; }
 }
 
 =pod
@@ -1078,10 +1360,11 @@ canadian postal code.
 
 =cut
 
-sub valid_zip_or_postcode {
-    return valid_zip(@_) || valid_postcode(@_);
+sub match_zip_or_postcode {
+    my $match;
+    if ($match = match_zip(@_)) { return $match; }
+    else {return match_postcode(@_)};
 }
-
 =pod
 
 =item postcode
@@ -1090,10 +1373,13 @@ This constraints checks if the input is a valid Canadian postal code.
 
 =cut
 
-sub valid_postcode {
+sub match_postcode {
     my $val = shift;
-    $val =~ s/[_\W]+//g;
-    return $val =~ /^[ABCEGHJKLMNPRSTVXYabceghjklmnprstvxy]\d[A-Za-z][- ]?\d[A-Za-z]\d$/;
+    #$val =~ s/[_\W]+//g;
+    if ($val =~ /^([ABCEGHJKLMNPRSTVXYabceghjklmnprstvxy][_\W]*\d[_\W]*[A-Za-z][_\W]*[- ]?[_\W]*\d[_\W]*[A-Za-z][_\W]*\d[_\W]*)$/) {
+	return $1;
+    }
+    else { return undef; }
 }
 
 =pod
@@ -1105,9 +1391,12 @@ This input validator checks if the input is a valid american zipcode :
 
 =cut
 
-sub valid_zip {
+sub match_zip {
     my $val = shift;
-    return $val =~ /^\s*\d{5}(?:[-]\d{4})?\s*$/;
+    if ($val =~ /^(\s*\d{5}(?:[-]\d{4})?\s*)$/) {
+	return $1;
+    }
+    else { return undef; }
 }
 
 =pod
@@ -1119,10 +1408,13 @@ contains at least 6 digits.)
 
 =cut
 
-sub valid_phone {
+sub match_phone {
     my $val = shift;
 
-    return $val =~ tr/0-9// >= 6;
+    if ($val =~ /^(\D*\d\D*){6,}$/) {
+	return $&;
+    }
+    else { return undef; }
 }
 
 =pod
@@ -1134,10 +1426,15 @@ of phone number : (XXX) XXX-XXXX. It has to contains 7 or more digits.
 
 =cut
 
-sub valid_american_phone {
+sub match_american_phone {
     my $val = shift;
-    return $val =~ tr/0-9// >= 7;
+
+    if ($val =~ /^(\D*\d\D*){7,}$/) {
+	return $&;
+    }
+    else { return undef; }
 }
+
 
 =pod
 
@@ -1157,19 +1454,20 @@ CHECK IF THERE IS AN ACCOUNT ASSOCIATED WITH THE NUMBER.
 
 # This one is taken from the contributed program to 
 # MiniVend by Bruce Albrecht
-sub valid_cc_number {
-    my ( $the_card, $card_type ) = @_;
 
+sub match_cc_number {
+    my ( $the_card, $card_type ) = @_;
+    my $orig_card = $the_card; #used for return match at bottom
     my ($index, $digit, $product);
     my $multiplier = 2;        # multiplier is either 1 or 2
     my $the_sum = 0;
 
-    return 0 if length($the_card) == 0;
+    return undef if length($the_card) == 0;
 
     # check card type
-    return 0 unless $card_type =~ /^[admv]/i;
+    return undef unless $card_type =~ /^[admv]/i;
 
-    return 0 if ($card_type =~ /^v/i && substr($the_card, 0, 1) ne "4") ||
+    return undef if ($card_type =~ /^v/i && substr($the_card, 0, 1) ne "4") ||
       ($card_type =~ /^m/i && substr($the_card, 0, 1) ne "5") ||
 	($card_type =~ /^d/i && substr($the_card, 0, 4) ne "6011") ||
 	  ($card_type =~ /^a/i && substr($the_card, 0, 2) ne "34" &&
@@ -1177,11 +1475,11 @@ sub valid_cc_number {
 
     # check for valid number of digits.
     $the_card =~ s/\s//g;    # strip out spaces
-    return 0 if $the_card !~ /^\d+$/;
+    return undef if $the_card !~ /^\d+$/;
 
     $digit = substr($the_card, 0, 1);
     $index = length($the_card)-1;
-    return 0 if ($digit == 3 && $index != 14) ||
+    return undef if ($digit == 3 && $index != 14) ||
         ($digit == 4 && $index != 12 && $index != 15) ||
             ($digit == 5 && $index != 15) ||
                 ($digit == 6 && $index != 13 && $index != 15);
@@ -1199,7 +1497,13 @@ sub valid_cc_number {
     $the_sum = 10 - $the_sum if $the_sum;
 
     # return whether checksum matched.
-    $the_sum == substr($the_card, -1);
+    if ($the_sum == substr($the_card, -1)) {
+	if ($orig_card =~ /^([\d\s]*)$/) { return $1; }
+	else { return undef; }
+    }
+    else {
+	return undef;
+    }
 }
 
 =pod
@@ -1211,18 +1515,24 @@ the MM part is a valid month (1-12) and if that date is not in the past.
 
 =cut
 
-sub valid_cc_exp {
+sub match_cc_exp {
     my $val = shift;
+    my ($matched_month, $matched_year);
 
     my ($month, $year) = split('/', $val);
-    return 0 if $month !~ /^\d+$/ || $year !~ /^\d+$/;
-    return 0 if $month <1 || $month > 12;
+    return undef if $month !~ /^(\d+)$/;
+    $matched_month = $1;
+
+    return undef if  $year !~ /^(\d+)$/;
+    $matched_year = $1;
+
+    return undef if $month <1 || $month > 12;
     $year += ($year < 70) ? 2000 : 1900 if $year < 1900;
     my @now=localtime();
     $now[5] += 1900;
-    return 0 if ($year < $now[5]) || ($year == $now[5] && $month <= $now[4]);
+    return undef if ($year < $now[5]) || ($year == $now[5] && $month <= $now[4]);
 
-    return 1;
+    return "$matched_month/$matched_year";
 }
 
 =pod
@@ -1234,9 +1544,10 @@ A(merican express) or D(iscovery).
 
 =cut
 
-sub valid_cc_type {
+sub match_cc_type {
     my $val = shift;
-    return $val =~ /^[MVAD]/i;
+    if ($val =~ /^([MVAD].*)$/i) { return $1; }
+    else { return undef; }
 }
 
 =pod
@@ -1248,12 +1559,17 @@ This checks if the input is formatted like an IP address (v4)
 =cut
 
 # contributed by Juan Jose Natera Abreu <jnatera@net-uno.net>
-sub valid_ip_address {
+
+sub match_ip_address {
    my $val = shift;
    if ($val =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
-     return 
-       (($1 >= 0 && $1 <= 255) && ($2 >= 0 && $2 <= 255) && ($3 >= 0 && $3 <= 255) && ($4 >= 0 && $4 <= 255))
+       if 
+	   (($1 >= 0 && $1 <= 255) && ($2 >= 0 && $2 <= 255) && ($3 >= 0 && $3 <= 255) && ($4 >= 0 && $4 <= 255)) {
+	       return $&;
+	   }
+       else { return undef; }
    }
+   else { return undef; }
 }
 
 # check the profile syntax and die if we have an error
@@ -1276,7 +1592,11 @@ sub _check_profile_syntax {
 		filters
 		field_filters
 		field_filter_regexp_map
-		missing_optional_valid /);
+		missing_optional_valid
+		validator_packages
+        untaint_constraint_fields
+		untaint_all_constraints
+		/);
 
 	# If any of the keys in the profile are not listed as valid keys here, we die with an error	
 	for my $key (keys %$profile) {
@@ -1284,7 +1604,7 @@ sub _check_profile_syntax {
 			die "Invalid input profile: $key is not a valid profile key\n"
 		}
 	}
-}
+    }
 
 1;
 

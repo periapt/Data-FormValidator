@@ -12,3 +12,4 @@
 .tar.gz$
 ^notes
 ^releases
+.swp$
