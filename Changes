@@ -1,3 +1,7 @@
+3.11 Tue May 27 2003
+	- Bug Fix: "qr" support now works better with older versions of Perl
+	  (Mike Fragassi)
+
 3.10 Mon May 26 2003 
 	- New Feature: Any regular expression from Regexp::Common can now be used
 	  directly as a named constraint. See Data::FormValidator::Constraints

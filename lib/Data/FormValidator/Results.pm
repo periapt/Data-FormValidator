@@ -21,7 +21,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 use vars qw/$AUTOLOAD $VERSION/;
 use Symbol;
 
-$VERSION = 3.1;
+$VERSION = 3.11;
 
 =pod
 
@@ -766,7 +766,8 @@ sub _create_sub_from_RE {
 	my $return_code = ($untaint_this) ? '; return (substr($_[0], $-[0], $+[0] - $-[0]) =~ m/(.*)/s)[0] if defined($-[0]);' : '';
 
 	my $sub;
-	if ($re =~ /^\(/) {
+	# If it's "qr" style
+	if (substr($re,0,1) eq '(') {
 		$sub = sub { 
 			my $match = $_[0] =~ $re; 
 			if ($untaint_this && defined $-[0]) {
