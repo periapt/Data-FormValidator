@@ -25,7 +25,7 @@ package Data::FormValidator;
 use vars qw( $VERSION );
 
 BEGIN {
-    ($VERSION) = '$Revision: 1.3 $' =~ /Revision: ([\d.]+)/;
+    ($VERSION) = '$Revision: 1.4 $' =~ /Revision: ([\d.]+)/;
 }
 
 require Exporter;
@@ -572,7 +572,7 @@ sub _arrayify {
    # if the input is undefined, we just return that. -mls
    my $val = shift || return undef;
 
-   if ( ref $val ) {
+   if ( ref $val eq 'ARRAY' ) {
 		# if it's a reference, return an array unless it points an empty array. -mls
 		return $val->[0] ? @$val : undef;   
    } 
