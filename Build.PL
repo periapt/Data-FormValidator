@@ -1,4 +1,5 @@
 shift(@ARGV) if $ARGV[0] eq 'Build'; # accomodate with CPAN autoinstall
+#arch-tag: Mark_Stosberg_<mark@summersault.com>--2004-03-20_18:34:25
 use Module::Build;
 
 my $class = Module::Build->subclass(

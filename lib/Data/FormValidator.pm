@@ -31,61 +31,61 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '3.51';
+$VERSION = '3.52';
 
 require Exporter;
 @ISA = qw(Exporter);
 
 %EXPORT_TAGS = (
     filters => [qw/
-          filter_alphanum
-          filter_decimal
-          filter_digit
-          filter_dollars
-          filter_integer
-          filter_lc
-          filter_neg_decimal
-          filter_neg_integer
-          filter_phone
-          filter_pos_decimal
-          filter_pos_integer
-          filter_quotemeta
-          filter_sql_wildcard
-          filter_strip
-          filter_trim
-          filter_uc
-          filter_ucfirst
+        filter_alphanum
+        filter_decimal
+        filter_digit
+        filter_dollars
+        filter_integer
+        filter_lc
+        filter_neg_decimal
+        filter_neg_integer
+        filter_phone
+        filter_pos_decimal
+        filter_pos_integer
+        filter_quotemeta
+        filter_sql_wildcard
+        filter_strip
+        filter_trim
+        filter_uc
+        filter_ucfirst
     /],
     validators => [qw/
-	valid_american_phone
-	valid_cc_exp
-	valid_cc_number
-	valid_cc_type
-	valid_email
-	valid_ip_address
-	valid_phone
-	valid_postcode
-	valid_province
-	valid_state
-	valid_state_or_province
-	valid_zip
-	valid_zip_or_postcode
-/],
+        valid_american_phone
+        valid_cc_exp
+        valid_cc_number
+        valid_cc_type
+        valid_email
+        valid_ip_address
+        valid_phone
+        valid_postcode
+        valid_province
+        valid_state
+        valid_state_or_province
+        valid_zip
+        valid_zip_or_postcode
+    /],
     matchers => [qw/
-	match_american_phone
-	match_cc_exp
-	match_cc_number
-	match_cc_type
-	match_email
-	match_ip_address
-	match_phone
-	match_postcode
-	match_province
-	match_state
-	match_state_or_province
-	match_zip
-	match_zip_or_postcode
-/],		
+        match_american_phone
+        match_cc_exp
+        match_cc_number
+        match_cc_type
+        match_email
+        match_ip_address
+        match_phone
+        match_postcode
+        match_province
+        match_state
+        match_state_or_province
+        match_zip
+        match_zip_or_postcode
+    /],        
 );
 @EXPORT_OK = (@{ $EXPORT_TAGS{filters} }, @{ $EXPORT_TAGS{validators} }, @{ $EXPORT_TAGS{matchers} });
 
@@ -111,11 +111,11 @@ on input profile.
  my $results = Data::FormValidator->check(\%input_hash, \%dfv_profile);
  
  if ($results->has_invalid or $results->has_missing) {
- 	# do something with $results->invalid, $results->missing
- 	# or  $results->msgs
+     # do something with $results->invalid, $results->missing
+     # or  $results->msgs
  }
  else {
- 	# do something with $results->valid
+     # do something with $results->valid
  }
 
 
@@ -135,7 +135,7 @@ failed, or process the resulting valid data.
 
 sub new {
     my $proto = shift;
-	my $profiles_or_file = shift;
+    my $profiles_or_file = shift;
     my $defaults = shift;
 
     my $class = ref $proto || $proto;
@@ -145,21 +145,21 @@ sub new {
             die 'second argument to new must be a hash ref';
     }
 
-	my ($file, $profiles);
+    my ($file, $profiles);
 
-	if (ref $profiles_or_file) {
-		$profiles = $profiles_or_file;
-	}
-	else {
-		$file = $profiles_or_file;
-	}
+    if (ref $profiles_or_file) {
+        $profiles = $profiles_or_file;
+    }
+    else {
+        $file = $profiles_or_file;
+    }
 
 
     bless { 
-		profile_file => $file,
-	    profiles	 => $profiles,
+        profile_file => $file,
+        profiles     => $profiles,
         defaults     => $defaults,
-	  }, $class;
+    }, $class;
 }
 
 =pod
@@ -191,7 +191,7 @@ The second argument is a reference to the profile you are validating.
 =head2 validate()
 
     my( $valids, $missings, $invalids, $unknowns ) = 
-		Data::FormValidator->validate( \%input_hash, \%dfv_profile);
+        Data::FormValidator->validate( \%input_hash, \%dfv_profile);
 
 C<validate()> provides a deprecated alternative to C<check()>. It has the same input
 syntax, but returns a four element array, described as follows
@@ -310,13 +310,13 @@ L<CGI::Application|CGI::Application> super-class to make use of this feature:
 =cut
 
 sub validate {
-	my ($self,$data,$name) = @_;
+    my ($self,$data,$name) = @_;
 
     my $data_set = $self->check( $data,$name );
 
-    my $valid	= $data_set->valid();
-    my $missing	= $data_set->missing();
-    my $invalid	= $data_set->{validate_invalid};
+    my $valid   = $data_set->valid();
+    my $missing = $data_set->missing();
+    my $invalid = $data_set->{validate_invalid};
     my $unknown = [ $data_set->unknown ];
 
     return ( $valid, $missing, $invalid, $unknown );
@@ -324,31 +324,31 @@ sub validate {
 
 sub check {
     my ( $self, $data, $name ) = @_;
-	
-	# check can be used as a class method for simple cases
-	if (not ref $self) {
+    
+    # check can be used as a class method for simple cases
+    if (not ref $self) {
         my $class = $self;
         $self = {};
         bless $self, $class;
     }
 
-	my $profile;
-	if ( ref $name ) {
-		$profile = $name;
-	} else {
-		$self->load_profiles;
-		$profile = $self->{profiles}{$name};
-		die "No such profile $name\n" unless $profile;
-	}
-	die "input profile must be a hash ref" unless ref $profile eq "HASH";
+    my $profile;
+    if ( ref $name ) {
+        $profile = $name;
+    } else {
+        $self->load_profiles;
+        $profile = $self->{profiles}{$name};
+        die "No such profile $name\n" unless $profile;
+    }
+    die "input profile must be a hash ref" unless ref $profile eq "HASH";
 
-	# add in defaults from new(), if any
-	if ($self->{defaults}) {
-		$profile = { %{$self->{defaults}}, %$profile };
-	}
-	
-	# check the profile syntax or die with an error. 
-	_check_profile_syntax($profile);
+    # add in defaults from new(), if any
+    if ($self->{defaults}) {
+        $profile = { %{$self->{defaults}}, %$profile };
+    }
+    
+    # check the profile syntax or die with an error. 
+    _check_profile_syntax($profile);
 
     my $results = Data::FormValidator::Results->new( $profile, $data );
 
@@ -475,7 +475,7 @@ the values are references to arrays of the field names in each group.
 =head2 defaults
 
  defaults => {
- 	country => "USA",
+     country => "USA",
  },
 
 This is a hash reference where keys are field names and 
@@ -504,7 +504,7 @@ See Data::FormValidator::Filters for details on the built-in filters.
 =head2 field_filters
 
  field_filters => { 
- 	cc_no => ['digit'],
+     cc_no => ['digit'],
  },
 
 A hash ref with field names and keys. Values are array references
@@ -515,8 +515,8 @@ See Data::FormValidator::Filters for details on the built-in filters.
 =head2 field_filter_regexp_map
 
  field_filter_regexp_map => {
- 	# Upper-case the first letter of all fields that end in "_name"
- 	qr/_name$/	=> ['ucfirst'],
+     # Upper-case the first letter of all fields that end in "_name"
+     qr/_name$/    => ['ucfirst'],
  },
 
 This is a hash reference where the keys are the regular expressions to
@@ -527,12 +527,12 @@ match a regular expression.
 =head2 constraints
 
  constraints => {
-	cc_no      => {  
-		constraint  => "cc_number",
-		params	    => [ qw( cc_no cc_type ) ],
-	},
-	cc_type	=> "cc_type",
-	cc_exp	=> "cc_exp",
+    cc_no      => {  
+        constraint  => "cc_number",
+        params        => [ qw( cc_no cc_type ) ],
+    },
+    cc_type    => "cc_type",
+    cc_exp    => "cc_exp",
   },
 
 A hash ref which contains the constraints that
@@ -548,7 +548,7 @@ A named constraint.
 
 B<Example>: 
 
- my_zipcode_field 	=> 'zip',
+ my_zipcode_field     => 'zip',
 
 See L<Data::FormValidator::Constraints> for the details of which
 built-in constraints that are available.
@@ -591,25 +591,39 @@ a hash reference, to name a constraint or supply multiple parameters.
 
  # supply multiple parameters
  cc_no  => {  
- 	constraint  => "cc_number",
- 	params	     => [ qw( cc_no cc_type ) ],
+     constraint  => "cc_number",
+     params         => [ qw( cc_no cc_type ) ],
  },
 
  # name a constraint, useful for returning error messages
  last_name => {
- 	name => "ends_in_name",
-	constraint => qr/_name$/,
+     name => "ends_in_name",
+     constraint => qr/_name$/,
  },
 
-Using the hash reference for a constraint allows the possibility to
-pass in multiple arguments to the constraint, and to provide a name for a
-constraint that doesn't have one. The name can be used in the error message
-system to return a custom error message for this constraint. In some cases you
-will want to use C<constraint_method> instead of C<constraint>.  Consult the
-documentation for the constraint you are using to see which is correct for
-that case.  If in doubt, use C<constraint>.
+Using a hash reference for a constraint permits the passing of multiple
+arguments. Required arguments are C<constraint> or C<constraint_method>.
+Optional arguments are C<name> and C<params>.
 
-For details see L<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
+A C<name> on a constraints 'glues' the constraint to its error message
+in the validator profile (refer C<msgs> section below). If no C<name> is 
+given then it will default to the value of C<constraint> or 
+C<constraint_method> IF they are NOT a CODE ref or a RegExp ref.
+
+The C<params> value is a reference to an array of the parameters to pass 
+to the constraint method. 
+If an element of the C<params> list is a scalar, it is assumed to be naming
+a key of the %input_hash and that value is passed to the routine. 
+If the parameter is a '\' reference, then it is treated literally and passed 
+unchanged to the routine.
+
+If you are using the older C<constraint> over 
+the new C<constraint_method> then don't forget to include the name of the 
+field to check in the C<params> list. C<constraint_method> provides access
+to this value via the C<get_current_*> methods 
+(refer L<Data::FormValidator::Constraints>)
+
+For more details see L<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
 
 =item o 
 
@@ -624,9 +638,9 @@ See L<MULTIPLE CONSTRAINTS> below.
 =head2 constraint_regexp_map
 
  constraint_regexp_map => {
- 	# All fields that end in _postcode have the 'postcode' constraint applied.
- 	qr/_postcode$/	=> 'postcode',
- },			      
+     # All fields that end in _postcode have the 'postcode' constraint applied.
+     qr/_postcode$/    => 'postcode',
+ },                  
 
 A hash ref where the keys are the regular expressions to
 use and the values are the constraints to apply. 
@@ -704,7 +718,7 @@ will be used.
 The default formatting applied is designed for display in an XHTML web page.
 That formatting is as followings:
 
-	<span style="color:red;font-weight:bold"><span class="dfv_errors">* %s</span></span>
+    <span style="color:red;font-weight:bold"><span class="dfv_errors">* %s</span></span>
 
 The C<%s> will be replaced with the message. The effect is that the message
 will appear in bold red with an asterisk before it. This style can be overriden by simply
@@ -714,36 +728,36 @@ Here's a more complex example that shows how to provide your own default message
 as providing custom messages per field, and handling multiple constraints:
 
  msgs => {
- 	
- 	# set a custom error prefix, defaults to none
+     
+     # set a custom error prefix, defaults to none
      prefix=> 'error_',
  
- 	# Set your own "Missing" message, defaults to "Missing"
+     # Set your own "Missing" message, defaults to "Missing"
      missing => 'Not Here!',
  
- 	# Default invalid message, default's to "Invalid"
+     # Default invalid message, default's to "Invalid"
      invalid => 'Problematic!',
  
- 	# message seperator for multiple messages
- 	# Defaults to ' '
+     # message seperator for multiple messages
+     # Defaults to ' '
      invalid_seperator => ' <br /> ',
  
- 	# formatting string, default given above.
+     # formatting string, default given above.
      format => 'ERROR: %s',
  
- 	# Error messages, keyed by constraint name
- 	# Your constraints must be named to use this.
+     # Error messages, keyed by constraint name
+     # Your constraints must be named to use this.
      constraints => {
                      'date_and_time' => 'Not a vaild time format',
                      # ...
      },
  
- 	# This token will be included in the hash if there are 
- 	# any errors returned. This can be useful with templating
- 	# systems like HTML::Template
- 	# The 'prefix' setting does not apply here.
- 	# defaults to undefined
- 	any_errors => 'some_errors',
+     # This token will be included in the hash if there are 
+     # any errors returned. This can be useful with templating
+     # systems like HTML::Template
+     # The 'prefix' setting does not apply here.
+     # defaults to undefined
+     any_errors => 'some_errors',
  }
 
 The hash that's prepared can be retrieved through the C<msgs> method
@@ -786,8 +800,8 @@ Deprecated, but supported
 You can pass more than one value into a constraint routine.  For that, the
 value of the constraint should be a hash reference. If you are creating your
 own routines, be sure to read the section labeled L<WRITING YOUR OWN VALIDATION
-ROUTINES>, in the Data::FormValidator::Constraints documentation.  It describes a
-newer and more flexible syntax. 
+ROUTINES>, in the Data::FormValidator::Constraints documentation.  It describes
+a newer and more flexible syntax. 
 
 Using the original syntax, one key should be named C<constraint> and should
 have a value set to the reference of the subroutine or the name of a built-in
@@ -800,8 +814,8 @@ include the name of the field to check in that list, if you are using this synta
 B<Example>:
 
  cc_no  => {  
- 	constraint  => "cc_number",
- 	params	     => [ qw( cc_no cc_type ) ],
+     constraint  => "cc_number",
+     params         => [ qw( cc_no cc_type ) ],
  },
 
 
@@ -818,11 +832,11 @@ constraint and include a C<name> key with a value set to the name of your
 constraint.  Here's an example:
 
  my_zipcode_field => [
-  	'zip',
-	{ 
-		constraint =>  '/^406/', 
-		name 	   =>  'starts_with_406',
-	}
+     'zip',
+     { 
+       constraint =>  '/^406/', 
+       name        =>  'starts_with_406',
+     }
  ],
 
 You can use an array reference with a single constraint in it if you just want
@@ -840,7 +854,7 @@ sub load_profiles {
     return unless $file;
 
     die "No such file: $file\n" unless -f $file;
-    die "Can't read $file\n"	unless -r _;
+    die "Can't read $file\n"    unless -r _;
 
     my $mtime = (stat _)[9];
     return if $self->{profiles} and $self->{profiles_mtime} <= $mtime;
@@ -856,38 +870,42 @@ sub load_profiles {
 
 # check the profile syntax and die if we have an error
 sub _check_profile_syntax {
-	my $profile = shift;
+    my $profile = shift;
 
-	die "Invalid input profile: needs to be a hash reference\n" unless ref $profile eq "HASH";
+    (ref $profile eq 'HASH') or
+        die "Invalid input profile: needs to be a hash reference\n";
 
-	my @valid_profile_keys = (qw/
-		constraint_regexp_map
-		constraints
-		defaults
-		dependencies
-		dependency_groups
-		field_filter_regexp_map
-		field_filters
-		filters
-		missing_optional_valid
-		msgs
-		optional
-		optional_regexp
-		require_some
-		required
-		required_regexp 
-		untaint_all_constraints
-		validator_packages
-        untaint_constraint_fields
-		debug
-		/);
+    my %valid_profile_keys = (
+        constraint_regexp_map=> undef,
+        constraints=> undef,
+        defaults=> undef,
+        dependencies=> undef,
+        dependency_groups=> undef,
+        field_filter_regexp_map=> undef,
+        field_filters=> undef,
+        filters=> undef,
+        missing_optional_valid=> undef,
+        msgs=> undef,
+        optional=> undef,
+        optional_regexp=> undef,
+        require_some=> undef,
+        required=> undef,
+        required_regexp => undef,
+        untaint_all_constraints=> undef,
+        validator_packages=> undef,
+        untaint_constraint_fields=> undef,
+        debug=> undef,
+    );
 
-	# If any of the keys in the profile are not listed as valid keys here, we die with an error	
-	for my $key (keys %$profile) {
-		unless (grep {$key eq $_} @valid_profile_keys) {
-			die "Invalid input profile: $key is not a valid profile key\n"
-		}
-	}
+    # If any of the keys in the profile are not listed as 
+    # valid keys here, we die with an error    
+    my @invalid;
+    for my $key (keys %$profile) {
+        push @invalid, $key unless exists $valid_profile_keys{$key};
+    }
+    return unless @invalid;
+    local $" = ', ';
+    die "Invalid input profile: keys not recognised [@invalid]\n";
 }
 
 

@@ -1,3 +1,15 @@
+3.52 Sun Mar 21 2004
+    [BUG FIXES]
+    - After a constraint failed, future constraints relying on the same input
+      parameters may have falsely failed. (Kevin Baker)  
+    - Untainting of false values (such as '0') was broken, and has been fixed.    
+      (Kato Atsushi)
+
+    [ENHANCEMENTS]
+    - the profile syntax checker now reports all invalid keys, instead of just
+      the first one.  Also, this code was refactored to be a bit faster. (Kevin Baker).
+
+
 3.51 Thu Feb 26 2004
     [THINGS THAT MIGHT BREAK YOUR CODE]
     - The default formatting now uses the 'class' attribute in the <span> tag instead
@@ -302,3 +314,4 @@
 	- filter functions are exported
 	- Renamed to Data::FormValidator from HTML::FormValidator
 
+# arch-tag: Mark_Stosberg_<mark@summersault.com>--2004-03-20_18:34:51 
