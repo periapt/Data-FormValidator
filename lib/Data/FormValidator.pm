@@ -25,7 +25,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION );
 
-$VERSION = 1.9;
+$VERSION = '1.10';
 
 
 require Exporter;
@@ -227,6 +227,9 @@ Here is an example of a valid input profiles specification :
 	      }
 	    filters       => [ "trim" ],
 	    field_filters => { cc_no => "digit" },
+	    field_filter_regexp_map => {
+			'/_name$/'	=> 'ucfirst',
+	    },
 	},
     }
 
@@ -310,6 +313,16 @@ This is a reference to an hash which contains reference to array of
 filters which will be applied to specific input fields. The key of the
 hash is the name of the input field and the value is a reference to an
 array of filters, the same way the filters parameter works.
+
+=item field_filter_regexp_map
+
+This is a hash reference where the keys are the regular expressions to
+use and the values are references to arrays of filters which will be
+applied to specific input fields. Used to apply filters to fields that
+match a regular expression. For example, you could make the first letter
+uppercase of all fields that end in "_name" by using the key '/_name$/'
+and the value "ucfirst".
+
 
 =item constraints
 
@@ -466,6 +479,24 @@ sub validate {
 		}
     }   
 
+	# add in specific filters from the regexp map
+	while ( my ($re,$filters) = each %{$profile->{field_filter_regexp_map} }) {
+		my $sub = eval 'sub { $_[0] =~ '. $re . '}';
+		die "Error compiling regular expression $re: $@" if $@;
+
+		foreach my $filter ( _arrayify($filters)) {
+			if (defined $filter) {
+				# Qualify symbolic references
+				$filter = ref $filter ? $filter : "filter_" . $filter;
+				no strict 'refs';
+
+				# find all the keys that match this RE and apply filters to them
+				map { $valid{$_} = $filter->( $valid{$_} ) }
+					grep { $sub->($_) } (keys %valid);
+			}	
+		}
+	}
+ 
     my %required    = map { $_ => 1 } _arrayify($profile->{required});
     my %optional    = map { $_ => 1 } _arrayify($profile->{optional});
 
@@ -1202,9 +1233,6 @@ by Michael J. Heins <mike@heins.net>
 The credit card checksum validation was taken from contribution by
 Bruce Albrecht <bruce.albrecht@seag.fingerhut.com> to the MiniVend
 program.
-
-Mark Stosberg contributed a number of enhancements including
-I<required_regexp>, I<optional_regexp> and I<constraint_regexp_map>
 
 =head1 PUBLIC CVS SERVER
 

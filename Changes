@@ -1,5 +1,8 @@
 Revision history for Perl extension Data::FormValidator.
 
+1.10 Sun Apr 21 2002
+	- Added code for field_filter_regexp_map (Tim Noll)
+
 1.9  Sun Feb 17 2002
 	- Fixed bug introduced in 1.8 which caused missing optional fields to 
 	  wrongly subjected to constraint checking
