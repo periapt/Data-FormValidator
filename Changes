@@ -1,3 +1,12 @@
+3.12 Tue Jun 22 2003 
+	- don't die in ::Upload if we can't find the tmp file.
+	  Instead, the constraint fails and a warning is emitted. 
+
+	- Added "image/pjpeg" to list of default mime types to use with file_format.
+	  This is for the "progressive JPEG" format.
+
+    - Several documentation improvements, thanks to Mike Fragassi.
+
 3.11 Tue May 27 2003
 	- Bug Fix: "qr" support now works better with older versions of Perl
 	  (Mike Fragassi)

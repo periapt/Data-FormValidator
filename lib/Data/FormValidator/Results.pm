@@ -31,7 +31,7 @@ Data::FormValidator::Results - Object which contains the results of an input val
 
 =head1 SYNOPSIS
 
-    my $results = $validator->check( \%fdat, "customer_infos" );
+ 	my $results = Data::FormValidator->check(\%input_hash, \%dfv_profile);
 
     # Print the name of missing fields
     if ( $results->has_missing ) {
@@ -602,141 +602,30 @@ sub msgs {
 
 }
 
-=pod
 
-=head1 WRITING YOUR OWN VALIDATION ROUTINES
-
-It's easy to create your own module of validation routines. The easiest approach
-to this may be to check the source code of the Data::FormValidator module for example
-syntax. Also notice the C<validator_packages> option in the input profile.
-
-You will find that validation routines are named two ways. Some are named with
-the prefix C<match_> while others start with C<valid_>. The difference is that the
-C<match_ routines> are built to untaint the data and routine a safe version of
-it if it validates, while C<valid_> routines simply return a true value if the
-validation succeeds and false otherwise.
-
-It is preferable to write "match" routines that untaint data for the extra security
-benefits. Plus, Data::FormValidator will AUTOLOAD a "valid_" version if anyone tries to
-use it, so you only need to write one routine to cover both cases. 
-
-Usually validation routines only need one input, the value being specified. However,
-sometimes more than one value is needed. For that, the following syntax is
-recommended for calling the routines:
-
-B<Example>:
-
-		image_field  => {  
-			constraint_method  => 'max_image_dimensions',
-			params => [\100,\200],
-		},
-
-Using this syntax, the first parameter that will be passed to the routine is
-the Data::FormValidator object. The remaining parameters will come from the
-C<params> array. Strings will be replaced by the values of fields with the same names,
-and references will be passed directly.
-
-A couple of of useful methods to use on the Data::FormValidator::Results object  are
-available to you to use inside of your routine.
-
-=over 4
-
-=item get_input_data
-
-Returns the raw input data. This may be a CGI object if that's what 
-was used in the validation routine. 
-
-B<Example>
-
- my $data = $self->get_input_data;
-
-=back
-
-=cut 
+# These are documented in ::Constraints, in the section
+# on writing your own routines. It was more intuitive
+# for the user to look there. 
 
 sub get_input_data {
 	my $self = shift;
 	return $self->{__INPUT_DATA};
 }
 
-=pod
-
-=over 4
-
-=item get_current_constraint_field
-
-Returns the name of the current field being tested in the constraint.
-
-B<Example>:
-
- my $field = $self->get_current_constraint_field;
-
-This reduces the number of parameters that need to be passed into the routine
-and allows multi-valued constraints to be used with C<constraint_regexp_map>.
-
-=back
-
-For complete examples of multi-valued constraints, see L<Data::FormValidator::Constraints::Upload>
-
-=cut
-
 sub get_current_constraint_field {
 	my $self = shift;
 	return $self->{__CURRENT_CONSTRAINT_FIELD};
 }
-
-=pod
-
-=over 4
-
-=item get_current_constraint_value
-
-Returns the name of the current value being tested in the constraint.
-
-B<Example>:
-
- my $value = $self->get_current_constraint_value;
-
-This reduces the number of parameters that need to be passed into the routine
-and allows multi-valued constraints to be used with C<constraint_regexp_map>.
-
-=back
-
-=cut
 
 sub get_current_constraint_value {
 	my $self = shift;
 	return $self->{__CURRENT_CONSTRAINT_VALUE};
 }
 
-=pod
-
-=over 4
-
-=item get_current_constraint_name
-
-Returns the name of the current constraint being applied
-
-B<Example>:
-
- my $value = $self->get_current_constraint_name;
-
-This is useful for building a constraint on the fly based on it's name.
-It's used internally as part of the interface to the L<Regexp::Commmon>
-regular expressions.
-
-
-=back
-
-=cut
-
 sub get_current_constraint_name {
 	my $self = shift;
 	return $self->{__CURRENT_CONSTRAINT_NAME};
 }
-
-
-
 
 
 # INPUT: prefix_string, hash reference

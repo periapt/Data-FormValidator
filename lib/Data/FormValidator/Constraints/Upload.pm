@@ -20,7 +20,7 @@ use vars qw($VERSION @ISA @EXPORT);
 	valid_file_max_bytes	
 );
 
-$VERSION = '0.05';
+$VERSION = '0.07';
 
 sub valid_file_format {
 	my $self = shift;
@@ -44,7 +44,8 @@ sub valid_file_format {
    if (!$img && $q->cgi_error) {
    		warn $q->cgi_error && return undef;
 	}
-    my $tmp_file = $q->tmpFileName($q->param($field)) || die "$0: can't find tmp file";
+    my $tmp_file = $q->tmpFileName($q->param($field)) || 
+	 (warn "$0: can't find tmp file for field named $field" and return undef);
 
 	require File::MMagic;	
 	my $mm = File::MMagic->new; 
@@ -55,7 +56,7 @@ sub valid_file_format {
 
    # XXX perhaps this should be in a global variable so it's easier
    # for other apps to change the defaults;	
-   $params->{mime_types} ||= [qw!image/jpeg image/gif image/png!];
+   $params->{mime_types} ||= [qw!image/jpeg  image/pjpeg image/gif image/png!];
    my %allowed_types = map { $_ => 1 } @{ $params->{mime_types} };
 
    # try the File::MMagic, then the uploaded field, then return undef we find neither
@@ -122,8 +123,8 @@ sub valid_image_max_dimensions {
 	require Image::Size;
 	import Image::Size;
 
-    my $tmp_file = $q->tmpFileName($q->param($field)) 
-		|| warn "$0: can't find tmp file";
+    my $tmp_file = $q->tmpFileName($q->param($field)) || 
+	 (warn "$0: can't find tmp file for field named $field" and return undef);
 
     my ($width,$height,$err) = imgsize($tmp_file);
 	unless ($width) {

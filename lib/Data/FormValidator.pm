@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '3.11';
+$VERSION = '3.12';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -167,6 +167,8 @@ sub new {
 =head1 VALIDATING INPUT
 
 =head2 check()
+
+ my $results = Data::FormValidator->check(\%input_hash, \%dfv_profile);
 
 C<check> is the recommended method to use to validate forms. It returns it's results as
 L<Data::FormValidator::Results|Data::FormValidator::Results> object.  A
@@ -400,6 +402,7 @@ spaces.  will be reported as missing.
  required_regexp => qr/city|state|zipcode/,
 
 This is a regular expression used to specify additional fieds which are
+required.
 
  require_some => {
     # require any two fields from this group
@@ -468,6 +471,7 @@ This is a hash reference which contains information about groups of
 interdependent fields. The keys are arbitrary names that you create and
 the values are references to arrays of the field names in each group. 
 
+
 =head2 defaults
 
  defaults => {
@@ -479,6 +483,7 @@ values are defaults to use if input for th e field is missing.
 
 The defaults are set shortly before the constraints are applied, and
 will be returned with the other valid data.
+
 
 =head2 filters
 
@@ -555,11 +560,17 @@ a perl regular expression
 
 B<Example>: 
 
- my_zipcode_field   => '/^\d{5}$/', # match exactly 5 digits
+ my_zipcode_field   => qr/^\d{5}$/, # match exactly 5 digits
+
+If this field is named in the C<untaint_constraint_fields>, or 
+C<untaint_all_constraints> is effective, be aware of the following: If you
+write your own regular expressions and only match part of the string then
+you'll only get part of the string in the valid hash. It is a good idea to
+write you own constraints like /^regex$/. That way you match the whole string.
 
 =item o
 
-a subroutine reference
+a subroutine reference, to supply custom code
 
 This will check the input and return true or false depending on the input's validity.
 By default, the constraint function takes one parameter, the field to be
@@ -574,12 +585,39 @@ B<Examples>:
  # OR you can reference a subroutine, which should work like the one above
  my_zipcode_field => \&my_validation_routine, 
 
+=item o
+
+a hash reference, to name a constraint or supply multiple parameters.
+
+ # supply multiple parameters
+ cc_no  => {  
+ 	constraint  => "cc_number",
+ 	params	     => [ qw( cc_no cc_type ) ],
+ },
+
+ # name a constraint, useful for returning error messages
+ last_name => {
+ 	name => "ends_in_name",
+	constraint => qr/_name$/,
+ },
+
+Using the hash reference for a constraint allows the possibility to
+pass in multiple arguments to the constraintk, and to provide a name for for a
+constraint that doesn't have one. The name can be used in the error message
+system to return a custom error message for this constraint. In some cases you
+will want to use C<constraint_method> instead of C<constraint>.  Consult the
+documentation for the the constraint you are using to see which is correct for
+that case.  If in doubt, use C<constraint>.
+
+For details see L<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
+
 =item o 
 
 an array reference
 
 An array reference is used to apply multiple constraints to a single
-field. See L<MULTIPLE CONSTRAINTS> below.
+field. Any of the above options are valid entries the array.
+See L<MULTIPLE CONSTRAINTS> below.
 
 =back
 
@@ -603,14 +641,10 @@ field for each regular expression that matches.
 
 If this field is set all form data that passes a constraint will be untainted.
 The untainted data will be returned in the valid hash.  Untainting is based on
-the pattern match used by the constraint.  Note that some validation routines
+the pattern match used by the constraint.  Note that some constraint routines
 may not provide untainting.
 
-If you write your own regular expressions and only match part of the string
-then you'll only get part of the string in the valid hash. It is a good idea to
-write you own constraints like /^regex$/. That way you match the whole string.
-
-See L<WRITING YOUR OWN VALIDATION ROUTINES> in the Data::FormValidator::Results
+See L<WRITING YOUR OWN CONSTRAINT ROUTINES> in the Data::FormValidator::Constraints
 documention for more information.
 
 This is overridden by C<untaint_constraint_fields>
@@ -642,15 +676,15 @@ set back to "blank" may fail to get updated.
  # load all the constraints from these modules
  validator_packages => [qw(Data::FormValdidator::Constraints::Upload)],
 
-This key is used to define other packages which contain validation routines.
+This key is used to define other packages which contain constraint routines.
 Set this key to a single package name, or an arrayref of several. All of its
-validation routines. will become available for use.  beginning with 'match_'
-and 'valid_' will be imported into Data::FormValidator.  This lets you
-reference them in a constraint with just their name, just like built-in
-routines .  You can even override the provided validators.
+constraint routines  beginning with 'match_' and 'valid_' will be imported into
+Data::FormValidator.  This lets you reference them in a constraint with just
+their name, just like built-in routines.  You can even override the provided
+validators.
 
-See L<WRITING YOUR OWN VALIDATION ROUTINES> in the Data::FormValidator::Results
-documention for more information
+See L<WRITING YOUR OWN CONSTRAINT ROUTINES> in the Data::FormValidator::Constraints
+documentation for more information
 
 =head2 msgs
 
@@ -749,11 +783,11 @@ Deprecated, but supported
 
 =head1 VALIDATING INPUT BASED ON MULTIPLE FIELDS
 
-You can pass more than one value into a validation routine.  For that, the
+You can pass more than one value into a constraint routine.  For that, the
 value of the constraint should be a hash reference. If you are creating your
-own routines, be sure to read the section labeled L<WRITING YOUR OWN VALIDATION ROUTINES>, 
-in the Data::FormValidator::Results documentation.
-It describes a newer and more flexible syntax. 
+own routines, be sure to read the section labeled L<WRITING YOUR OWN VALIDATION
+ROUTINES>, in the Data::FormValidator::Results documentation.  It describes a
+newer and more flexible syntax. 
 
 Using the original syntax, one key should be named C<constraint> and should
 have a value set to the reference of the subroutine or the name of a built-in

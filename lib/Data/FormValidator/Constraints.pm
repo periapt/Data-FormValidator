@@ -513,6 +513,101 @@ value with the I<email> validator directly you may:
 Notice that when you call validators directly and want them to return an
 untainted value, you'll need to prefix the validator name with "match_" 
 
+=pod
+
+=head1 WRITING YOUR OWN CONSTRAINT ROUTINES
+
+It's easy to create your own module of constraint routines. The easiest approach
+to this may be to check the source code of the Data::FormValidator module for example
+syntax. Also notice the C<validator_packages> option in the input profile.
+
+You will find that constraint routines are named two ways. Some are named with
+the prefix C<match_> while others start with C<valid_>. The difference is that the
+C<match_ routines> are built to untaint the data and routine a safe version of
+it if it validates, while C<valid_> routines simply return a true value if the
+validation succeeds and false otherwise.
+
+It is preferable to write "match" routines that untaint data for the extra security
+benefits. Plus, Data::FormValidator will AUTOLOAD a "valid_" version if anyone tries to
+use it, so you only need to write one routine to cover both cases. 
+
+Usually constraint routines only need one input, the value being specified. However,
+sometimes more than one value is needed. For that, the following syntax is
+recommended for calling the routines:
+
+B<Example>:
+
+		image_field  => {  
+			constraint_method  => 'max_image_dimensions',
+			params => [\100,\200],
+		},
+
+Using this syntax, the first parameter that will be passed to the routine is
+the Data::FormValidator object. The remaining parameters will come from the
+C<params> array. Strings will be replaced by the values of fields with the same names,
+and references will be passed directly.
+
+In addition to C<constraint_method>, there is also an older technique using
+the name C<constraint> instead. Routines that are designed to work with
+C<constraint> I<don't> have access to Data::FormValidator object, which
+means users need to pass in the name of the field being validated. Besides
+adding unnecessary syntax to the user interface, it won't work in conjunction
+with C<constraint_regexp_map>.
+
+A couple of of useful methods to use on the Data::FormValidator::Results object  are
+available to you to use inside of your routine.
+
+=over 4
+
+=item get_input_data
+
+Returns the raw input data. This may be a CGI object if that's what 
+was used in the constraint routine. 
+
+B<Example>
+
+ my $data = $self->get_input_data;
+
+=item get_current_constraint_field
+
+Returns the name of the current field being tested in the constraint.
+
+B<Example>:
+
+ my $field = $self->get_current_constraint_field;
+
+This reduces the number of parameters that need to be passed into the routine
+and allows multi-valued constraints to be used with C<constraint_regexp_map>.
+
+For complete examples of multi-valued constraints, see L<Data::FormValidator::Constraints::Upload>
+
+=item get_current_constraint_value
+
+Returns the name of the current value being tested in the constraint.
+
+B<Example>:
+
+ my $value = $self->get_current_constraint_value;
+
+This reduces the number of parameters that need to be passed into the routine
+and allows multi-valued constraints to be used with C<constraint_regexp_map>.
+
+=item get_current_constraint_name
+
+Returns the name of the current constraint being applied
+
+B<Example>:
+
+ my $value = $self->get_current_constraint_name;
+
+This is useful for building a constraint on the fly based on it's name.
+It's used internally as part of the interface to the L<Regexp::Commmon>
+regular expressions.
+
+=back
+
+=cut
+
 =head1 SEE ALSO
 
 Data::FormValidator(3), Data::FormValidator::Filters(3),
