@@ -1,0 +1,58 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.21.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It would check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 f0b81632d2e99aa88805a72a3377a1d9a4b32ca6 Build.PL
+SHA1 2d098ea47f98354c62a8cf2745e0538f4407c0af Changes
+SHA1 9d3b441ed02a1f2835c3f1e98910c2efd14f585e MANIFEST
+SHA1 c4755e252a1aebfc32f11c62f5a6f39a722e6d18 MANIFEST.SKIP
+SHA1 17b1eb5e8075bcbeba6f93e11fc4390dcdb35236 META.yml
+SHA1 db430bd5d98df76843515a65a18d08627b436d65 Makefile.PL
+SHA1 24e6c32eaea0c1c3f6a3581c3f43525238c6e835 README
+SHA1 b53538e87840a390182f5478f9f6204f403a9a8d lib/Data/FormValidator.pm
+SHA1 508f668210adf922ed2abec79dbdce7044cfec83 t/00_base.t
+SHA1 97e407655c3190cb48a24a4a484c6d36562d6107 t/01_simple.t
+SHA1 99e197bfb407f214db2ec2cfe41a728b3ba74e3a t/02_code_ref.t
+SHA1 b0bb40c2b99409db8f304f6202ff66aafafe90ad t/03_dependency.t
+SHA1 b887b2402fbaef8285b985aa792dc12e231215eb t/04_arrayify_undef.t
+SHA1 47a1eb38c7c463e07ff7bf581e037c73324aca3e t/05_valid_ip_address.t
+SHA1 9013a2d70e1b74c1fe2024639941e87e124c59ee t/06_regexp_map.t
+SHA1 5db06777514f0ae1b39ca7f24b7a090b2fae02ca t/07_missing_optional.t
+SHA1 4179566bfd6059949683b1af0ff63ea7c5981342 t/08_profile_checking.t
+SHA1 cb135efb719e955866dbb4910654eebf0a1e7e5a t/09_require_some.t
+SHA1 8edb7eaf75cff4c825283daae480e22a93370d49 t/10_procedural_valid.t
+SHA1 19922552f7bb668bfd481bcb7efcbb65f1994a25 t/11_procedural_match.t
+SHA1 41fde03543a08c9cddf7b81f38f36ca53096e145 t/12_untaint.pl
+SHA1 c34fb9086a7616e4f8fe76f4b6fa0545a7b8c8fa t/12_untaint.t
+SHA1 40415b261cffc819adb0ccdfc2eb3606c7d520ee t/13_validator_packages.t
+SHA1 f2d92877a780154e5f27df08c0ad00d59bf2f65f t/14_multiple_constraints.t
+SHA1 bf872a2607cfc45c49d50a7ca89db30a82fe99a6 t/15_literal_param_constraints.t
+SHA1 44c088ca0fd744530881b3d831e86bc54ba33a63 t/16_cgi_object.t
+SHA1 7f8a7ed6c7d82c88760ec93059a27fb933644962 t/17_multi_valued_keys.t
+SHA1 2e6c9608356190a1bf5170cd7aaaeb9522429af7 t/18_constraint_refs.t
+SHA1 005c154386950e39a507a8e9d1dcf720bb198591 t/19_refs_as_values.t
+SHA1 f635dd67d3cbfafd3860d2a6c750e8775ee9abed t/20_careful_exception_handling.t
+SHA1 2eb276fe7893a8bb2b0ffc3993c571c66fe6e9f2 t/21_multiple_fields.t
+SHA1 55faf0e1b915c96b27e255a66f9cc36ba4640d31 t/22_msgs.t
+SHA1 3008e219b5e3b95f595fcd1d3b1e83a141e5137b t/ValidatorPackagesTest1.pm
+SHA1 584cdfe95cf57a3b81f3c11d5337ef616925b8f1 t/ValidatorPackagesTest2.pm
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.0.6 (FreeBSD)
+Comment: For info see http://www.gnupg.org
+
+iD8DBQE+oxzZsKQdKVrv3XwRAni6AJ9Ftd1HCweR3F1uvZ7wak0vhErWqACfXdk1
+K6OTiuLQlbPNrsm2/8hzxgo=
+=TScK
+-----END PGP SIGNATURE-----

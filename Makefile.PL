@@ -5,6 +5,7 @@ WriteMakefile(
     'NAME'	=> 'Data::FormValidator',
     'VERSION_FROM' => './lib/Data/FormValidator.pm', # finds $VERSION
 	'PREREQ_PM' => {
-		'Test'	=> 0,
+		'Test'		  => 0,
+		'Test::More'  => 0,
 	}
 );

@@ -1,8 +1,11 @@
+Build.PL
 Changes
 MANIFEST			This list of files
 MANIFEST.SKIP
 Makefile.PL
+META.yml
 README
+SIGNATURE
 lib/Data/FormValidator.pm
 t/00_base.t
 t/01_simple.t
@@ -27,5 +30,6 @@ t/18_constraint_refs.t
 t/19_refs_as_values.t
 t/20_careful_exception_handling.t
 t/21_multiple_fields.t
+t/22_msgs.t
 t/ValidatorPackagesTest1.pm
 t/ValidatorPackagesTest2.pm

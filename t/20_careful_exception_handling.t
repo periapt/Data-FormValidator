@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 
 # This tests to make sure that when we test $@, we are testing the right thing.
-# inspired by a patch from Êdom@semantico.com
+# inspired by a patch from dom@semantico.com
 use lib ('.','../t');
 
 $^W = 1;

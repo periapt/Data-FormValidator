@@ -1,0 +1,16 @@
+--- #YAML:1.0
+name: Data-FormValidator
+version: 2.10
+license: perl
+distribution_type: module
+requires:
+  Test: 0
+  Test::More: 0
+recommends: {}
+build_requires: {}
+conflicts: {}
+provides:
+  Data::FormValidator:
+    file: lib/Data/FormValidator.pm
+    version: 2.10
+generated_by: Module::Build version 0.18

@@ -20,12 +20,11 @@
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms same terms as perl itself.
 #
-#    $Header: /cvsroot/cascade/dfv/lib/Data/FormValidator.pm,v 1.8 2003/03/23 02:57:23 markjugg Exp $
 package Data::FormValidator;
 
 use vars qw( $VERSION $AUTOLOAD);
 
-$VERSION = '2.04';
+$VERSION = '2.10';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -496,6 +495,89 @@ B<Example>:
 
 	validator_packages => [qw(ProjectName::Validate::Basic)],
 
+=item msgs
+
+This key is used to transform the output of the C<$invalid> and C<$missing> 
+return values from array references to hash references which provide the field
+names as keys and error messages as values. By default, invalid fields have the message
+"Invalid" associated with them while missing fields have the message "Missing"
+associated with them. In the simplest case, this key can simply be defined as 
+a reference to a an empty hash, like this:
+
+B<Example>:
+
+	msgs =>{}
+
+This will cause the default messages to be used for missing and invalid fields. Some
+default formatting will also be applied, designed for display in an XHTML web
+page. That formatting is as followings:
+
+	<span style="color:red;font-weight:bold"><span id="dfv_errors">* %s</span></span>
+
+The C<%s> will be replaced with the message. The effect is that the message
+will appear in bold red with an asterisk before it. This style can be overriden by simply
+defining "dfv_errors" appropriately in a style sheet, or by providing a new format string.
+
+Here's a more complex example that shows how to provide your own default message strings, as well
+as providing custom messages per field, and with multiple constraints:
+
+	msgs => {
+	   invalid => {
+
+		   # define custom messages for invalid fields
+		   field => {
+				   first_name => 'may contain only alphabet letters',
+				   phone => 'may contain only numeric characters',
+
+				   # custom messages for an invalid field with multiple constraints
+				   age => {
+						   min => 'must be at least 18 years old',
+						   max => 'how can he be older than 150?'
+				   },
+		   },
+
+		   # a default message for invalid fields 
+		   default => 'contains an invalid value'
+	   },
+
+	   # You can define per-field messages for missing fields, too
+	   # Here, only a new default message is used. 
+	   missing => {
+		 default=> 'contains a missing value '
+	   },
+
+	   # providing a custom formatting string
+	   format => 'ERROR: %s',
+
+	   # Prefix all field names with this string.
+	   # Setting prefix to the value of '',
+	   # causing the default string 'err_' to be used.
+	   prefix => 'error_', 
+	}
+
+
+
+Here's an example of an <$invalid> hash reference that's returned with
+messages. Fields with multiple constraints are returned in a style that's
+directly compatible with HTML::Template.
+
+	$invalid =  {
+		field_with_single_constraints 		=> 'message',
+		field_with_multiple_constraints 	=> [
+			{   
+				constraint => 'min',
+				msg 	   => 'not high enough', 	
+			},
+			{   
+				constraint => 'max',
+				msg 	   => 'not low enough', 	
+			},
+		],
+	};
+
+
+
+
 =back
 
 =head1 VALIDATING INPUT BASED ON MULTIPLE FIELDS
@@ -913,8 +995,90 @@ sub validate {
 		}
 	}
 
-    return ( \%valid, \@missings, \@invalid, \@unknown );
+	my ($missing,$invalid);
+	if (ref $profile->{msgs} eq 'HASH') {
+		my $msgs = $profile->{msgs};
+		$invalid = _msg_hash_create($msgs->{invalid},$msgs->{format},\@invalid,'Invalid');
+		$missing = _msg_hash_create($msgs->{missing},$msgs->{format},\@missings,'Missing');
+
+		if (defined $msgs->{prefix}) {
+			my $pre = ($msgs->{prefix} eq '') ? 'err_' : $msgs->{prefix};
+			$invalid = prefix_hash($pre,$invalid);
+			$missing = prefix_hash($pre,$missing);
+		}
+	}
+	else {
+		$missing = \@missings;
+		$invalid = \@invalid;
+	}
+
+    return ( \%valid, $missing, $invalid, \@unknown );
 }
+
+# INPUT: prefix_string, hash reference
+# Copies the hash and prefixes all keys with prefix_string
+# OUTPUT: hash refence
+sub prefix_hash {
+	my ($pre,$href) = @_;
+	die "prefix_hash: need two arguments" unless (scalar @_ == 2);
+	die "prefix_hash: second argument must be a hash ref" unless (ref $href eq 'HASH');
+	my %out; 
+	for (keys %$href) {
+		$out{$pre.$_} = $href->{$_};
+	}
+	return \%out;
+}
+
+
+# If the msgs key is used in the profile, we transform the output data error structures
+# into hash references which contain error messages.
+sub _msg_hash_create {
+	my ($in_hash,$fmt,$array,$default) = @_;
+	die '_msg_hash_create: expecting 4 input arguments' unless (scalar @_ == 4);
+	my %msgs;
+	$default = $in_hash->{default} if defined $in_hash->{default};
+
+	for my $f (@$array) {
+		my $f_msgs = $in_hash->{field} || {};
+
+		my $field_name;
+		# If we have multiple constraints (only applies to the "invalid" case)
+		if (ref $f eq 'ARRAY') {
+			$field_name = $f->[0];
+
+			for (my $i = 1; $i < @$f; $i++) {
+				my $constraint = $f->[$i];
+
+				# If we have multiple messages
+				if (ref $f_msgs->{$field_name} eq 'HASH') {
+					my $msg = ($f_msgs->{$field_name}{$constraint} || $default);
+					push @{ $msgs{$field_name} }, {
+						constraint => $constraint,
+						msg => _error_msg_fmt($fmt,$msg),
+					};
+				}
+			}
+		}
+		else {
+			$field_name = $f;
+		}
+
+		$msgs{$field_name} ||= (defined $f_msgs->{$field_name} ? $f_msgs->{$field_name} : $default);
+		$msgs{$field_name} = _error_msg_fmt($fmt,$msgs{$field_name}) unless (ref $msgs{$field_name} eq 'ARRAY');
+	}
+
+	return \%msgs;
+}
+
+sub _error_msg_fmt ($$) {
+	my ($fmt,$msg) = @_;
+	$fmt ||= 
+			'<span style="color:red;font-weight:bold"><span id="vrm_errors">* %s</span></span>';
+	($fmt =~ m/%s/) || die 'format must contain %s'; 
+	return sprintf $fmt, $msg;
+}
+
+
 
 # takes string or array ref as input
 # returns array
@@ -1565,23 +1729,24 @@ sub _check_profile_syntax {
 	die "Invalid input profile: needs to be a hash reference\n" unless ref $profile eq "HASH";
 
 	my @valid_profile_keys = (qw/
-		optional
-		required
-		required_regexp 
-		require_some
-		optional_regexp
-		constraints
 		constraint_regexp_map
+		constraints
+		defaults
 		dependencies
 		dependency_groups
-		defaults
-		filters
-		field_filters
 		field_filter_regexp_map
+		field_filters
+		filters
 		missing_optional_valid
+		msgs
+		optional
+		optional_regexp
+		require_some
+		required
+		required_regexp 
+		untaint_all_constraints
 		validator_packages
         untaint_constraint_fields
-		untaint_all_constraints
 		/);
 
 	# If any of the keys in the profile are not listed as valid keys here, we die with an error	
