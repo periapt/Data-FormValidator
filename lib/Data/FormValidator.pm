@@ -1,21 +1,20 @@
 #
 #    FormValidator.pm - Object that validates form input data.
 #
-#    This file is part of FormValidator.
+#    This file is part of Data::FormValidator.
 #
 #    Author: Francis J. Lacoste <francis.lacoste@iNsu.COM>
 #
 #    Copyright (C) 1999 Francis J. Lacoste, iNsu Innovations
 #    Parts Copyright 1996-1999 by Michael J. Heins <mike@heins.net>
 #    Parts Copyright 1996-1999 by Bruce Albrecht  <bruce.albrecht@seag.fingerhut.com>
+#    Parts Copyright 2001      by Mark Stosberg <mark@stosberg.com>
 #
 #    Parts of this module are based on work by
 #    Bruce Albrecht, <bruce.albrecht@seag.fingerhut.com> contributed to
 #    MiniVend.
 #
 #    Parts also based on work by Michael J. Heins <mikeh@minivend.com>
-#
-#    Numerous changes by Mark Stosberg <mark@summersault.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms same terms as perl itself.
@@ -24,77 +23,81 @@ package Data::FormValidator;
 
 use vars qw( $VERSION );
 
-BEGIN {
-    ($VERSION) = '$Revision: 1.5.1 $' =~ /Revision: ([\d.]+)/;
-}
+$VERSION = 1.6;
+
+#BEGIN {
+#    ($VERSION) = '$Revision: 1.6 $' =~ /Revision: ([\d.]+)/;
+#}
 
 require Exporter;
 @ISA = qw(Exporter);
 
 @EXPORT_OK = qw(
-          filter_trim
-          filter_strip
-          filter_digit
-          filter_alphanum
-          filter_integer
-          filter_pos_integer
-          filter_neg_integer
-          filter_decimal
-          filter_pos_decimal
-          filter_neg_decimal
-          filter_dollars
-          filter_phone
-          filter_sql_wildcard
-          filter_quotemeta
-          filter_lc
-          filter_uc
-          filter_ucfirst
-	valid_email
-	valid_state_or_province
-	valid_state
-	valid_province
-	valid_zip_or_postcode
-	valid_postcode
-	valid_zip
-	valid_phone
+       	filter_alphanum
+	filter_decimal
+	filter_digit
+	filter_integer
+	filter_lc
+	filter_neg_decimal
+	filter_neg_integer
+	filter_phone
+	filter_pos_decimal
+	filter_pos_integer
+	filter_quotemeta
+	filter_sql_wildcard
+	filter_strip
+	filter_trim
+	filter_uc
+	filter_ucfirst
 	valid_american_phone
-	valid_cc_number
 	valid_cc_exp
+	valid_cc_number
 	valid_cc_type
+	valid_email
+	valid_ip_address
+	valid_phone
+	valid_postcode
+	valid_province
+	valid_state
+	valid_state_or_province
+	valid_zip
+	valid_zip_or_postcode
 );
 
 %EXPORT_TAGS = (
     filters => [qw/
-          filter_trim
-          filter_strip
-          filter_digit
           filter_alphanum
-          filter_integer
-          filter_pos_integer
-          filter_neg_integer
           filter_decimal
-          filter_pos_decimal
-          filter_neg_decimal
+          filter_digit
           filter_dollars
-          filter_phone
-          filter_sql_wildcard
-          filter_quotemeta
+          filter_integer
           filter_lc
+          filter_neg_decimal
+          filter_neg_integer
+          filter_phone
+          filter_pos_decimal
+          filter_pos_integer
+          filter_quotemeta
+          filter_sql_wildcard
+          filter_strip
+          filter_trim
           filter_uc
-          filter_ucfirst/],
+          filter_ucfirst
+    /],
     validators => [qw/
-	valid_email
-	valid_state_or_province
-	valid_state
-	valid_province
-	valid_zip_or_postcode
-	valid_postcode
-	valid_zip
-	valid_phone
 	valid_american_phone
-	valid_cc_number
 	valid_cc_exp
+	valid_cc_number
 	valid_cc_type
+	valid_email
+	valid_ip_address
+	valid_phone
+	valid_postcode
+	valid_province
+	valid_state
+	valid_state_or_province
+	valid_zip
+	valid_zip_or_postcode
 /],
 );
 
@@ -587,16 +590,17 @@ sub validate {
 # takes string or array ref as input
 # returns array
 sub _arrayify {
-   # if the input is undefined, we just return that. -mls
-   my $val = shift || return undef;
+   # if the input is undefined, return an empty list
+   my $val = shift;
+   defined $val or return ();
 
    if ( ref $val eq 'ARRAY' ) {
 		# if it's a reference, return an array unless it points an empty array. -mls
-		return $val->[0] ? @$val : undef;   
+                return $val->[0] ? @$val : ();
    } 
    else {
 		# if it's a string, return an array unless the string is missing or empty. -mls
-		return (length $val) ? ($val) : undef;   
+                return (length $val) ? ($val) : ();
    }
 }
 
@@ -1144,6 +1148,23 @@ A(merican express) or D(iscovery).
 sub valid_cc_type {
     my $val = shift;
     return $val =~ /^[MVAD]/i;
+}
+
+=pod
+
+=item ip_address
+
+This checks if the input is formatted like an IP address (v4)
+
+=cut
+
+# contributed by Juan Jose Natera Abreu <jnatera@net-uno.net>
+sub valid_ip_address {
+   my $val = shift;
+   if ($val =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+     return 
+       (($1 >= 0 && $1 <= 255) && ($2 >= 0 && $2 <= 255) && ($3 >= 0 && $3 <= 255) && ($4 >= 0 && $4 <= 255))
+   }
 }
 
 1;

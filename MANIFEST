@@ -1,6 +1,12 @@
 Changes
-lib/Data/FormValidator.pm
-Makefile.PL
 MANIFEST
+MANIFEST.SKIP
+Makefile.PL
+README
+lib/Data/FormValidator.pm
 t/0_base.t
 t/1_simple.t
+t/2_code_ref.t
+t/3_dependency.t
+t/4_arrayify_undef.t
+t/5_valid_ip_address.t
