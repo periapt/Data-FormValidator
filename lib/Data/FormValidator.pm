@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '3.50';
+$VERSION = '3.51';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -491,7 +491,7 @@ will be returned with the other valid data.
  filters       => ['trim'],
 
 This is a reference to an array of filters that will be applied to ALL
-optional or required fields. 
+optional and required fields. 
 
 This can be the name of a built-in filter
 (trim,digit,etc) or an anonymous subroutine which should take one parameter, 
@@ -704,7 +704,7 @@ will be used.
 The default formatting applied is designed for display in an XHTML web page.
 That formatting is as followings:
 
-	<span style="color:red;font-weight:bold"><span id="dfv_errors">* %s</span></span>
+	<span style="color:red;font-weight:bold"><span class="dfv_errors">* %s</span></span>
 
 The C<%s> will be replaced with the message. The effect is that the message
 will appear in bold red with an asterisk before it. This style can be overriden by simply
@@ -786,12 +786,12 @@ Deprecated, but supported
 You can pass more than one value into a constraint routine.  For that, the
 value of the constraint should be a hash reference. If you are creating your
 own routines, be sure to read the section labeled L<WRITING YOUR OWN VALIDATION
-ROUTINES>, in the Data::FormValidator::Results documentation.  It describes a
+ROUTINES>, in the Data::FormValidator::Constraints documentation.  It describes a
 newer and more flexible syntax. 
 
 Using the original syntax, one key should be named C<constraint> and should
 have a value set to the reference of the subroutine or the name of a built-in
-validator.  Another required key is I<params>. The value of the I<params> key
+validator.  Another required key is C<params>. The value of the C<params> key
 is a reference to an array of the other elements to use in the validation. If
 the element is a scalar, it is assumed to be a field name. If the value is a
 reference, the reference is passed directly to the routine. Don't forget to
@@ -899,6 +899,14 @@ __END__
 
 =pod
 
+=head1 ADVANCED VALIDATION
+
+For even more advanced validation, you will likely want to read the documentation
+for other modules in this distribution, linked below. Also keep in mind that the  
+Data::FormValidator profile structure is just another data structure. There is
+no reason why it needs to be defined statically. The profile could also be built
+on the fly with custom Perl code.
+
 =head1 SEE ALSO
 
 B<Other modules in this distribution:>
@@ -921,7 +929,10 @@ Validating Web Forms with Perl, L<http://mark.stosberg.com/Tech/perl/form-valida
 
 B<Related modules:>
 
-L<Data::FormValidator::Tutorial|Data::FormValidator::Tutorial>
+L<Data::FormValidator::Util::HTML|Data::FormValidator::Util::HTML>
+
+L<Data::FormValidator::Tutorial|Data::FormValidator::Tutorial> is now out of date.
+The sample application above may be a more useful introduction. 
 
 L<CGI::Application::ValidateRM|CGI::Application::ValidateRM>, a
 CGI::Application & Data::FormValidator glue module
@@ -944,20 +955,20 @@ Japanese: L<http://perldoc.jp/docs/modules/>
 B<Distributions which include Data::formValidator> 
 
 FreeBSD includes a port named B<p5-Data-FormValidator>
+
 Debian GNU/Linux includes a port named B<libdata-formvalidator-perl>
 
 =head1 CREDITS
 
 Some of those input validation functions have been taken from MiniVend
-by Michael J. Heins <mike@heins.net>
+by Michael J. Heins.
 
-The credit card checksum validation was taken from contribution by
-Bruce Albrecht <bruce.albrecht@seag.fingerhut.com> to the MiniVend
-program.
+The credit card checksum validation was taken from contribution by Bruce
+Albrecht to the MiniVend program.
 
 =head1 BUGS
 
-http://rt.cpan.org/NoAuth/Bugs.html?Dist=Data-FormValidator 
+L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Data-FormValidator> 
 
 =head1 AUTHOR
 

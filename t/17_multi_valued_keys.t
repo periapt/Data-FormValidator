@@ -1,12 +1,10 @@
 # This script tests validating keyts with multiple data
-# Mark Stosberg 02/16/03 
-
 use strict;
 use lib ('.','../t');
 
 $^W = 1;
 
-print "1..5\n";
+use Test::More tests => 7;
 
 my $input_hash = { 
 	single_value => ' Just One ',
@@ -40,23 +38,34 @@ eval{
   ($valids, $missings, $invalids, $unknowns) = $validator->validate($input_hash, 'default');
 };
 
-# Test that inconditional filters still work with single values
-print "not " unless $valids->{single_value} eq 'just one';
-print "ok 1\n";
+is($valids->{single_value},'just one',
+ 'inconditional filters still work with single values'
+);
 
-# Test that inconditional filters work with multi values
-print "not " unless lc $valids->{multi_values}->[0] eq lc 'one';
-print "ok 2\n";
+is(lc $valids->{multi_values}->[0],lc 'one',
+ 'inconditional filters work with multi values'
+);
 
-# Test that field filters work with multiple values
-print "not " unless $valids->{multi_values}->[0] eq 'ONE';
-print "ok 3\n";
+is($valids->{multi_values}->[0],'ONE',
+ 'field filters work with multiple values'
+);
 
-# Test the filters applied to multiple values by RE work
-print "not " unless $valids->{re_multi_test}->[0] eq 'At';
-print "ok 4\n";
+is($valids->{re_multi_test}->[0] ,'At',
+ 'Test the filters applied to multiple values by RE work'
+);
 
-# If any of the values fail the constraint, the field becomes invalid
-print "not " if $valids->{constraint_multi_test};
-print "ok 5\n";
+ok(!$valids->{constraint_multi_test},
+'If any of the values fail the constraint, the field becomes invalid'
+);
+
+my $r;
+eval { $r = Data::FormValidator->check({ undef_multi => [undef] }, { required => 'undef_multi' }) };
+diag "error: $@" if $@;
+ok($r->missing('undef_multi'), 'multi-valued field containing only undef should be missing'); 
+
+my $v;
+eval { $v = $r->valid('undef_multi'); };
+diag "error: $@" if $@;
+ok(!$v, 'multiple valued fields containing only undefined values should not be valid');
+
 

@@ -277,7 +277,7 @@ The meta data added is C<width> and C<height>.
 
 =head1 SEE ALSO
 
-L<Data::FormValidator>, L<CGI>, L<perl>
+L<FileMetadata>, L<Data::FormValidator>, L<CGI>, L<perl>
 
 =head1 AUTHOR
 

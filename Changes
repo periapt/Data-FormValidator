@@ -1,4 +1,23 @@
-3.50 Mon Jan 12 2003 
+3.51 Thu Feb 26 2004
+    [THINGS THAT MIGHT BREAK YOUR CODE]
+    - The default formatting now uses the 'class' attribute in the <span> tag instead
+      of the 'id' attribute. This shouldn't be a big deal and may actually make
+      CSS styling easier, but it is a change. (Drew Taylor)
+
+    [BUG FIXES]
+    - In some cases empty fields were marked as 'valid' under mod_perl when they shouldn't be.
+      (Drew Taylor)
+    - Prevent unnecessary death due to $@ being set. (Kevin Baker) 
+    - Fixed documentation typo related to writing your own constraints (Stewart Russell)
+
+    [ENHANCEMENTS]
+    - valid() can now return multiple values in array context.
+    - Mention Data::FormValidator::Util::HTML
+    - Added new t/constraints_builtin.t as a beginning of more through testing
+      of the built-in constraints.  
+    - Several documentation updates (Kevin Baker)
+
+3.50 Mon Jan 12 2004
     - No functionality changes since 3.49_1, I'm just declaring it stable.
     - I did sneak in the addition of a $VERSION in a couple included modules
     where none had been provided before.

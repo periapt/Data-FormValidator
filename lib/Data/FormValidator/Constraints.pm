@@ -527,12 +527,12 @@ syntax. Also notice the C<validator_packages> option in the input profile.
 
 You will find that constraint routines are named two ways. Some are named with
 the prefix C<match_> while others start with C<valid_>. The difference is that the
-C<match_ routines> are built to untaint the data and routine a safe version of
+C<match_> routines are built to untaint the data and return a safe version of
 it if it validates, while C<valid_> routines simply return a true value if the
 validation succeeds and false otherwise.
 
-It is preferable to write "match" routines that untaint data for the extra security
-benefits. Plus, Data::FormValidator will AUTOLOAD a "valid_" version if anyone tries to
+It is preferable to write C<match_> routines that untaint data for the extra security
+benefits. Plus, Data::FormValidator will AUTOLOAD a C<valid_> version if anyone tries to
 use it, so you only need to write one routine to cover both cases. 
 
 Usually constraint routines only need one input, the value being specified. However,

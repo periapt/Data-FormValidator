@@ -16,18 +16,18 @@ use strict;
 
 package Data::FormValidator::Results;
 
+use Symbol;
 use Data::FormValidator::Filters qw/:filters/;
 use Data::FormValidator::Constraints (qw/:validators :matchers/);
 use vars qw/$AUTOLOAD $VERSION/;
-use Symbol;
 
-$VERSION = 3.50;
+$VERSION = 3.51;
 
 =pod
 
 =head1 NAME
 
-Data::FormValidator::Results - Object which contains the results of an input validation.
+Data::FormValidator::Results - results of form input validation.
 
 =head1 SYNOPSIS
 
@@ -61,8 +61,8 @@ Data::FormValidator::Results - Object which contains the results of an input val
 
 =head1 DESCRIPTION
 
-This is the object returned by the Data::FormValidator check method. It can
-be queried for information about the validation results.
+This object is returned by the L<Data::FormValidator> C<check> method. 
+It can be queried for information about the validation results.
 
 =cut
 
@@ -197,7 +197,10 @@ sub _process {
 			if ( ref $valid{$field} eq 'ARRAY' ) {
 				for (my $i = 0; $i < scalar @{ $valid{$field} }; $i++) {
 					$valid{$field}->[$i] = undef unless (defined $valid{$field}->[$i] and length $valid{$field}->[$i]);
-				}
+			    }	
+                # If all fields are empty, we delete it.
+                delete $valid{$field} unless grep { defined $_ } @{$valid{$field}};
+
 			}
 		}
 		else {
@@ -252,7 +255,7 @@ sub _process {
 
     # Check for required fields
     foreach my $field ( keys %required ) {
-		push @missings, $field unless exists $valid{$field};
+        push @missings, $field unless exists $valid{$field};
     }
 
 	# Check for the absence of require_some fields
@@ -400,22 +403,34 @@ sub _process {
 
 =pod
 
-=head1  valid( [field], [value] );
+=head1  valid( [[field] [, value]] );
 
-This method returns in an array context the list of fields which
-contains valid value. In a scalar context, it returns an hash reference
-which contains the valid fields and their value.
+In an array context with no arguments, it returns the list of fields which 
+contain valid values:
 
-If called with one argument, it returns the value of that field if it
-contains valid data, undef otherwise.
+ @all_valid_field_names = $r->valid;
 
-If called with two arguments, the first is taken as a field in the valid
-hash, and this field is set to the value of the second argument. The
-value is returned.
+In a scalar context with no arguments, it returns an hash reference which 
+contains the valid fields as keys and their input as values:
 
-This can be useful in some cases to call from within a constraint
-to alter the results of the valid hash.
+ $all_valid_href = $r->valid;
 
+If called with one argument in scalar context, it returns the value of that
+C<field> if it contains valid data, C<undef> otherwise. The value will be an
+array ref if the field had multiple values:
+
+ $value = $r->valid('field');
+
+If called with one argument in array conect, it returns the values of C<field> 
+as an array:
+
+ @values = $r->valid('field');
+
+If called with two arguments, it sets C<field> to C<value> and returns C<value>.
+This form is useful to alter the results from within a C<constraint_method>.
+See the L<Data::FormValidator::Constraints> documentation.
+
+ $new_value = $r->valid('field',$new_value);
 
 =cut
 
@@ -424,8 +439,13 @@ sub valid {
 	my $key = shift;
 	my $val = shift;
 	$self->{valid}{$key} = $val if defined $val;
-	return $self->{valid}{$key} if defined $key;
-	wantarray ? keys %{ $self->{valid} } : $self->{valid};
+
+    if (defined $key) {
+        return wantarray ? _arrayify($self->{valid}{$key}) : $self->{valid}{$key};
+    }
+
+    # If we got this far, there were no arguments passed. 
+	return wantarray ? keys %{ $self->{valid} } : $self->{valid};
 }
 
 
@@ -445,11 +465,10 @@ sub has_missing {
 
 =head1 missing( [field] )
 
-This method returns in an array context the list of fields which
-are missing. In a scalar context, it returns an array reference
-to the list of missing fields.
+In an array context it returns the list of fields which are missing.
+In a scalar context, it returns an array reference to the list of missing fields.
 
-If called with an argument, it returns true if that field is missing,
+If called with an argument, it returns true if that C<field> is missing,
 undef otherwise.
 
 =cut
@@ -478,14 +497,13 @@ sub has_invalid {
 
 =head1 invalid( [field] )
 
-This method returns in an array context the list of fields which
-contains invalid value. 
+In an array context, it returns the list of fields which contains invalid value. 
 
 In a scalar context, it returns an hash reference which contains the invalid
 fields as keys, and references to arrays of failed constraints as values.
 
-If called with an argument, it returns the reference to
-an array of failed constraints for this field.
+If called with an argument, it returns the reference to an array of failed 
+constraints for C<field>.
 
 =cut
 
@@ -514,11 +532,11 @@ sub has_unknown {
 
 =head1 unknown( [field] )
 
-This method returns in an array context the list of fields which
-are unknown. In a scalar context, it returns an hash reference
-which contains the unknown fields and their value.
+In an array context, it returns the list of fields which are unknown. 
+In a scalar context, it returns an hash reference which contains the unknown 
+fields and their values.
 
-If called with an argument, it returns the value of that field if it
+If called with an argument, it returns the value of that C<field> if it
 is unknown, undef otherwise.
 
 =cut
@@ -535,7 +553,7 @@ sub unknown {
 =head1 msgs([config parameters])
 
 This method returns a hash reference to error messages. The exact format
-is determined by parameters in th C<msgs> area of the validation profile,
+is determined by parameters in the C<msgs> area of the validation profile,
 described in the L<Data::FormValidator> documentation.
 
 This method takes one possible parameter, a hash reference containing the same 
@@ -568,7 +586,7 @@ sub msgs {
 		missing => 'Missing',
 		invalid	=> 'Invalid',
 		invalid_seperator => ' ',
-		format  => '<span style="color:red;font-weight:bold"><span id="dfv_errors">* %s</span></span>',
+		format  => '<span style="color:red;font-weight:bold"><span class="dfv_errors">* %s</span></span>',
 		%{ $self->{msgs} },
 		%{ $self->{profile}->{msgs} },
 	);
@@ -725,8 +743,8 @@ sub _create_sub_from_RE {
 	}
 	else {
 		$sub = eval 'sub { $_[0] =~ '.$re.$return_code. '}';
+	    die "Error compiling regular expression $re: $@" if $@;
 	}
-	die "Error compiling regular expression $re: $@" if $@;
 	return $sub;
 }
 
@@ -734,7 +752,7 @@ sub _create_sub_from_RE {
 sub _error_msg_fmt ($$) {
 	my ($fmt,$msg) = @_;
 	$fmt ||= 
-			'<span style="color:red;font-weight:bold"><span id="vrm_errors">* %s</span></span>';
+			'<span style="color:red;font-weight:bold"><span class="dfv_errors">* %s</span></span>';
 	($fmt =~ m/%s/) || die 'format must contain %s'; 
 	return sprintf $fmt, $msg;
 }
