@@ -29,6 +29,7 @@ eval{
   ($valids, $missings, $invalids, $unknowns) = $validator->validate($input_hashref, 'default');
 };
 if($@){
+  warn "$@";
   print "not ";
 }
 print "ok 1\n";

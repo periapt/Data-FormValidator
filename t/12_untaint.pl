@@ -6,7 +6,7 @@ use Data::FormValidator;
 
 $ENV{PATH} = "/bin/";
 
-print "1..9\n";
+print "1..12\n";
 
 sub is_tainted {
     my $val = shift;
@@ -29,35 +29,47 @@ my $data3 = {
     dogs_name  => $ARGV[6], #Rufus
 };
 
+my $data4 = {
+	zip_field1 => [$ARGV[7],$ARGV[7]],  #12345 , 12345
+	zip_field2 => [$ARGV[7],$ARGV[8]],  #12345 , oops
+};
+
 my $profile = 
 {
     rules1 => {
-	untaint_constraint_fields => "firstname",
-	required => "firstname",
-        constraints => {
-	    firstname => '/^\w{1,15}$/'
-	    },
-	    },
+		untaint_constraint_fields => "firstname",
+		required => "firstname",
+		constraints => {
+			firstname => '/^\w{1,15}$/'
+		},
+	},
     rules2 => {
-	untaint_constraint_fields => [ qw( lastname email1 )],
-	required     =>
-	    [ qw( lastname email1 email2) ],
-	constraints  => {
-	    lastname => '/^\w{1,10}$/',
-	    email1 => "email",
-	    email2 => "email",
-	    }   
-    },   
+		untaint_constraint_fields => [ qw( lastname email1 )],
+		required     =>
+		[ qw( lastname email1 email2) ],
+		constraints  => {
+			lastname => '/^\w{1,10}$/',
+			email1 => "email",
+			email2 => "email",
+		}   
+	},   
     rules3 => {
-	untaint_all_constraints => 1,
-	required => 
-	    [ qw(ip_address cats_name dogs_name) ],
-	    constraints => {
-		ip_address => "ip_address",
-		cats_name  => '/^Felix$/',
-		dogs_name  => 'm/^rufus$/i',
+		untaint_all_constraints => 1,
+		required => 
+		[ qw(ip_address cats_name dogs_name) ],
+		constraints => {
+			ip_address => "ip_address",
+			cats_name  => '/^Felix$/',
+			dogs_name  => 'm/^rufus$/i',
 	    }
-    }
+    },
+	rules4 => {
+		untaint_constraint_fields=> ['zip_field1','zip_field2'],
+		required=>[qw/zip_field1 zip_field2/],
+		constraints=> {
+			zip_field1=>'zip',
+		},
+	},
 };
 
 my $validator = new Data::FormValidator($profile);
@@ -140,3 +152,22 @@ if (!$valid->{dogs_name}
     print "not ";
 }
 print "ok 9\n";
+
+# Rules # 4
+eval {  ( $valid, $missing, $invalid, $unknown )
+	    = $validator->validate(  $data4, "rules4");
+    };   
+
+if ($@) {
+    print "not ";
+}
+print "ok 10\n";
+# zip_field1 should be untainted
+print "not " if is_tainted($valid->{zip_field1}->[0]);
+print "ok 11\n";
+
+# zip_field2 should be tainted
+print "not " unless is_tainted($valid->{zip_field2}->[0]);
+print "ok 12\n";
+
+

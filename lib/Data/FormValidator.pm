@@ -20,12 +20,12 @@
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms same terms as perl itself.
 #
-#    $Header: /cvsroot/cascade/dfv/lib/Data/FormValidator.pm,v 1.3 2001/11/03 18:09:46 markjugg Exp $
+#    $Header: /cvsroot/cascade/dfv/lib/Data/FormValidator.pm,v 1.7 2003/03/02 21:20:21 markjugg Exp $
 package Data::FormValidator;
 
 use vars qw( $VERSION $AUTOLOAD);
 
-$VERSION = '1.92';
+$VERSION = '1.93';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -245,7 +245,7 @@ Here is an example of a valid input profiles specification :
 
 		require_some => {
 			# require any two fields from this group
-			city_or_state_or_zipcode [ 2, qw/city state zipcode/ ], 
+			city_or_state_or_zipcode => [ 2, qw/city state zipcode/ ], 
 		},	
 	    constraints  =>
 		{
@@ -485,11 +485,11 @@ This can be set to a true value (such as 1) to cause missing optional
 fields to be included in the valid hash. By default they are not
 included-- this is the historical behavior. 
 
-item validator_packages 
+=item validator_packages 
 
 This key is used to define other packages which contain validation routines. 
 Set this key to a single package name, or an arrayref of several. All of its
-subs beginning with 'valid_' will be imported into Data::FormValidator.
+subs beginning with 'match_' and 'valid_' will be imported into Data::FormValidator.
 This lets you reference them in a constraint with just their name (the part
 after the underscore).  You can even override the provided validators.
 
@@ -584,8 +584,12 @@ parameters :
 
 =item data
 
-Contains an hash which should correspond to the form input as
-submitted by the user. This hash is not modified by the call to validate.
+This is a the data you want to validate. It can take two possible forms. 
+First, it can ba reference to a hash. Secondly, it can be a CGI.pm object.
+In either case, this data is not modified by Data::FormValidator.
+Support for CGI.pm compatible objects is planned. Send a patch or get in touch
+if you are interested. 
+
 
 =item profile
 
@@ -640,40 +644,42 @@ sub validate {
 
 	# check the profile syntax or die with an error. 
 	_check_profile_syntax($profile);
+
     
     # Copy data and assumes that all is valid
-    my %valid	    = %$data;
+    my %valid	    =  _get_data($data);
     my @missings    = ();
     my @invalid	    = ();
     my @unknown	    = ();
 
     # import valid_* subs from requested packages
-    foreach my $package (_arrayify($profile->{validator_packages})) {
-	if ( !exists $self->{imported_validators}{$package} ) {
-	    eval "require $package";
-	    if ($@) {
-		die "Couldn't load validator package '$package': $@";
-	    }
-	    my $package_ref = qualify_to_ref("${package}::");
-	    my @subs = grep(/^(valid_|match_)/, keys(%{*{$package_ref}}));
-		foreach my $sub (@subs) {
-			# is it a sub? (i.e. make sure it's not a scalar, hash, etc.)
-			my $subref = *{qualify_to_ref("${package}::$sub")}{CODE};
-			if (defined $subref) {
-				*{qualify_to_ref($sub)} = $subref;
+	foreach my $package (_arrayify($profile->{validator_packages})) {
+		if ( !exists $self->{imported_validators}{$package} ) {
+			eval "require $package";
+			if ($@) {
+				die "Couldn't load validator package '$package': $@";
 			}
+			my $package_ref = qualify_to_ref("${package}::");
+			my @subs = grep(/^(valid_|match_)/, keys(%{*{$package_ref}}));
+			foreach my $sub (@subs) {
+				# is it a sub? (i.e. make sure it's not a scalar, hash, etc.)
+				my $subref = *{qualify_to_ref("${package}::$sub")}{CODE};
+				if (defined $subref) {
+					*{qualify_to_ref($sub)} = $subref;
+				}
+			}
+			$self->{imported_validators}{$package} = 1;
 		}
-	    $self->{imported_validators}{$package} = 1;
 	}
-    }
 
-     # Apply inconditional filters
+	# Apply inconditional filters
     foreach my $filter (_arrayify($profile->{filters})) {
 		if (defined $filter) {
 			# Qualify symbolic references
 			$filter = ref $filter ? $filter : *{qualify_to_ref("filter_$filter")}{CODE};
 			foreach my $field ( keys %valid ) {
-				$valid{$field} = $filter->( $valid{$field} );
+				# apply filter, modifying %valid by reference
+				_filter_apply(\%valid,$field,$filter);
 			}
 		}	
     }
@@ -684,7 +690,9 @@ sub validate {
 			if (defined $filter) {
 				# Qualify symbolic references
 				$filter = ref $filter ? $filter : *{qualify_to_ref("filter_$filter")}{CODE};
-				$valid{$field} = $filter->( $valid{$field} );
+				
+				# apply filter, modifying %valid by reference
+				_filter_apply(\%valid,$field,$filter);
 			}	
 		}
     }   
@@ -697,12 +705,14 @@ sub validate {
 		foreach my $filter ( _arrayify($filters)) {
 			if (defined $filter) {
 				# Qualify symbolic references
-				$filter = ref $filter ? $filter : "filter_" . $filter;
+				$filter = ref $filter ? $filter : *{qualify_to_ref("filter_$filter")}{CODE};
 				no strict 'refs';
 
 				# find all the keys that match this RE and apply filters to them
-				map { $valid{$_} = $filter->( $valid{$_} ) }
-					grep { $sub->($_) } (keys %valid);
+				for my $field (grep { $sub->($_) } (keys %valid)) {
+					# apply filter, modifying %valid by reference
+					_filter_apply(\%valid,$field,$filter);
+				}
 			}	
 		}
 	}
@@ -738,21 +748,28 @@ sub validate {
 	
 	# Remove all empty fields
 	foreach my $field (keys %valid) {
-		delete $valid{$field} unless length $valid{$field};
+		if (ref $valid{$field}) {
+			for (my $i = 0; $i < scalar @{ $valid{$field} }; $i++) {
+				delete $valid{$field}->[$i] unless length $valid{$field}->[$i];
+			}
+		}
+		else {
+			delete $valid{$field} unless length $valid{$field};
+		}
 	}
 
     # Check if the presence of some fields makes other optional fields required.
     while ( my ( $field, $deps) = each %{$profile->{dependencies}} ) {
         if ($valid{$field}) {
-            if (ref($deps) eq 'HASH') {
-                foreach my $key (keys %$deps) {
-                    if($valid{$field} eq $key){
-		        foreach my $dep (_arrayify($deps->{$key})){
-                            $required{$dep} = 1;
-                        }
-                    }
-                }
-            }
+			if (ref($deps) eq 'HASH') {
+				foreach my $key (keys %$deps) {
+					if($valid{$field} eq $key){
+						foreach my $dep (_arrayify($deps->{$key})){
+							$required{$dep} = 1;
+						}
+					}
+				}
+			}
             else {
                 foreach my $dep (_arrayify($deps)){
                     $required{$dep} = 1;
@@ -766,10 +783,10 @@ sub validate {
     foreach my $group (values %{ $profile->{dependency_groups} }) {
        my $require_all = 0;
        foreach my $field (_arrayify($group)) {
-	  $require_all = 1 if $valid{$field};
+	  		$require_all = 1 if $valid{$field};
        }
        if ($require_all) {
-	  map { $required{$_} = 1 } _arrayify($group); 
+	  		map { $required{$_} = 1 } _arrayify($group); 
        }
     }
 
@@ -777,14 +794,14 @@ sub validate {
     @unknown =
       grep { not (exists $optional{$_} or exists $required{$_} or exists $require_some{$_} ) } keys %valid;
     # and remove them from the list
-    foreach my $field ( @unknown ) {
-	delete $valid{$field};
-    }
+	foreach my $field ( @unknown ) {
+		delete $valid{$field};
+	}
 
     # Fill defaults
-    while ( my ($field,$value) = each %{$profile->{defaults}} ) {
-	$valid{$field} = $value unless exists $valid{$field};
-    }
+	while ( my ($field,$value) = each %{$profile->{defaults}} ) {
+		$valid{$field} = $value unless exists $valid{$field};
+	}
 
     # Check for required fields
     foreach my $field ( keys %required ) {
@@ -804,128 +821,90 @@ sub validate {
 	}
 
     # add in the constraints from the regexp map 
-    foreach my $re (keys %{ $profile->{constraint_regexp_map} }) {
-	my $sub = eval 'sub { $_[0] =~ '. $re . '}';
-       die "Error compiling regular expression $re: $@" if $@;
+	foreach my $re (keys %{ $profile->{constraint_regexp_map} }) {
+		my $sub = eval 'sub { $_[0] =~ '. $re . '}';
+		die "Error compiling regular expression $re: $@" if $@;
 
-       # find all the keys that match this RE and add a constraint for them
-       map { $profile->{constraints}{$_} = $profile->{constraint_regexp_map}{$re} }
-	 grep { $sub->($_) } (keys %valid);	
-    }
+		# find all the keys that match this RE and add a constraint for them
+		map { $profile->{constraints}{$_} = $profile->{constraint_regexp_map}{$re} }
+		grep { $sub->($_) } (keys %valid);	
+	}
  
     # Check constraints
 
     #Decide which fields to untaint
     my ($untaint_all, %untaint_hash);
-    if (defined($profile->{untaint_constraint_fields})) {
-	if (ref $profile->{untaint_constraint_fields} eq "ARRAY") {
-	    foreach my $field (@{$profile->{untaint_constraint_fields}}) {
-		$untaint_hash{$field} = 1;
-	    }
+	if (defined($profile->{untaint_constraint_fields})) {
+		if (ref $profile->{untaint_constraint_fields} eq "ARRAY") {
+			foreach my $field (@{$profile->{untaint_constraint_fields}}) {
+				$untaint_hash{$field} = 1;
+			}
+		}
+		elsif ($valid{$profile->{untaint_constraint_fields}}) {
+			$untaint_hash{$profile->{untaint_constraint_fields}} = 1;
+		}
 	}
-	elsif ($valid{$profile->{untaint_constraint_fields}}) {
-	    $untaint_hash{$profile->{untaint_constraint_fields}} = 1;
-	}
-    }
     elsif ((defined($profile->{untaint_all_constraints}))
 	   && ($profile->{untaint_all_constraints} == 1)) {
-	$untaint_all = 1;
+	   $untaint_all = 1;
     }
     
     while ( my ($field,$constraint_list) = each %{$profile->{constraints}} ) {
-       my (@invalid_list);
-       my $is_list = 1;
 
        next unless exists $valid{$field};
 
-       if ( ref $constraint_list ne "ARRAY" ) {
-          # transform into an arrayref so we can iterate below
-          $constraint_list = [$constraint_list];
-          $is_list = undef;
-       }
+	   my $is_constraint_list = 1 if ref $constraint_list;
+	   my $untaint_this =  ($untaint_all || $untaint_hash{$field} || 0);
 
-       foreach my $constraint_spec (@$constraint_list) {
-	   my ($constraint,$constraint_name,@params);
-	   $constraint = $constraint_name = $constraint_spec;
-	   @params = ( $valid{$field} );
-	   
-	   if ( ref $constraint_spec eq "HASH" ) {
-	       $constraint = $constraint_name = $constraint_spec->{constraint};
-	       if (exists $constraint_spec->{params}) {
-		   @params = ();
-		   foreach my $fname ( _arrayify($constraint_spec->{params})  ) {
-		       if (ref $fname) {
-			   push @params, $fname;
-		       } else {
-			   push @params, $valid{$fname};
-		      }
-		   }
-	       }
-	       if ( exists $constraint_spec->{name} ) {
-		   $constraint_name = $constraint_spec->{name};
-	       }
+	   my @invalid_list;
+	   foreach my $constraint_spec (_arrayify($constraint_list)) {
+			 my $c = _constraint_hash_build($field,$constraint_spec,$untaint_this);
+
+			 my $is_value_list = 1 if ref $valid{$field};
+			 if ($is_value_list) {
+				 foreach (my $i = 0; $i < scalar @{ $valid{$field}} ; $i++) {
+					 my @params = _constraint_input_build($c,$valid{$field}->[$i]);
+
+					 my ($match,$failed) = _constraint_check_match($c,\@params);
+					 if ($failed) {
+						push @invalid_list, $failed;
+					 }
+					 else {
+						 $valid{$field}->[$i] = $match if $untaint_this;
+					 }
+				 }
+			 }
+			 else {
+				my @params = _constraint_input_build($c,$valid{$field});
+				my ($match,$failed) = _constraint_check_match($c,\@params);
+				if ($failed) {
+					push @invalid_list, $failed
+				}
+				else {
+					$valid{$field} = $match if $untaint_this;
+
+				}
+			 }
 	   }
 
-	   unless ( ref $constraint ) {
-	       # Check for regexp constraint
-	       if ( $constraint =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ ) {
-		   #If untainting return the match otherwise return result of match
-		   my $return_code = ($untaint_all || $untaint_hash{$field}) ? 'return $&;' : "";
-		   
-		   my $sub = eval 'sub { $_[0] =~ '. $constraint . ';'
-		       . $return_code . '}';
-		   die "Error compiling regular expression $constraint: $@" if $@;
-		   $constraint = $sub;
-		   # Cache for next use
-		   if ( ref $constraint_spec eq "HASH" ) {
-		       $constraint_spec->{constraint} = $sub;
-		   } else {
-		       $profile->{constraints}{$field} = $sub;
-		   }
-	       } else {
-		   # Qualify symbolic reference
-		   
-		   #If untaint is turned on call match_* sub directly. 
-		   if ($untaint_all || $untaint_hash{$field}) {
-		       $constraint = *{qualify_to_ref("match_$constraint")}{CODE};
+	   if (@invalid_list) {
+		   if ($is_constraint_list) {
+				push @invalid, [$field, map { $_->{name} } @invalid_list];
 		   }
 		   else {
-		       my $routine = 'match_' . $constraint;
-		       $constraint = sub { no strict qw/refs/;
-					   return defined &{$routine}(@_)};
+			   push @invalid, $field;
 		   }
-	       }
+		   delete $valid{$field};
 	   }
-	  
-	  my ($match);
-	  if ($match = $constraint->( @params )) { 
-	      if ($untaint_all || $untaint_hash{$field}) {
-		  #Replace the field value with whatever was matched with the constraint
-		  $valid{$field} = $match; 
-	      }
-	  }
-	  else {
-	      if ($is_list) {
-		  push @invalid_list, $constraint_name;
-	      } else {
-			delete $valid{$field};
-			push @invalid, $field;
-		}
-	  }
-      }
 
-      if ($is_list and @invalid_list) {
-         delete $valid{$field};
-         push @invalid, [$field, @invalid_list];
-      }
    }
 
     # add back in missing optional fields from the data hash if we need to
-    foreach my $field ( keys %$data ) {
+	foreach my $field ( keys %$data ) {
 		if ($profile->{missing_optional_valid} and $optional{$field} and (not exists $valid{$field})) {
-			 $valid{$field} = undef;
-		 }
-	    }
+			$valid{$field} = undef;
+		}
+	}
 
     return ( \%valid, \@missings, \@invalid, \@unknown );
 }
@@ -1286,8 +1265,8 @@ address would pass the test :
 sub match_email {
     my $email = shift;
 
-    if ($email =~ /^[\040-\176]+\@[-A-Za-z0-9.]+\.[A-Za-z]+$/) {
-	return $&;
+    if ($email =~ /^([\040-\176]+\@[-A-Za-z0-9.]+\.[A-Za-z]+)$/) {
+	return $1;
     }
     else { return undef; }
 }
@@ -1411,8 +1390,8 @@ contains at least 6 digits.)
 sub match_phone {
     my $val = shift;
 
-    if ($val =~ /^(\D*\d\D*){6,}$/) {
-	return $&;
+    if ($val =~ /^((?:\D*\d\D*){6,})$/) {
+	return $1;
     }
     else { return undef; }
 }
@@ -1429,8 +1408,8 @@ of phone number : (XXX) XXX-XXXX. It has to contains 7 or more digits.
 sub match_american_phone {
     my $val = shift;
 
-    if ($val =~ /^(\D*\d\D*){7,}$/) {
-	return $&;
+    if ($val =~ /^((?:\D*\d\D*){7,})$/) {
+	return $1;
     }
     else { return undef; }
 }
@@ -1562,10 +1541,10 @@ This checks if the input is formatted like an IP address (v4)
 
 sub match_ip_address {
    my $val = shift;
-   if ($val =~ m/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/) {
+   if ($val =~ m/^((\d+)\.(\d+)\.(\d+)\.(\d+))$/) {
        if 
-	   (($1 >= 0 && $1 <= 255) && ($2 >= 0 && $2 <= 255) && ($3 >= 0 && $3 <= 255) && ($4 >= 0 && $4 <= 255)) {
-	       return $&;
+	   (($2 >= 0 && $2 <= 255) && ($3 >= 0 && $3 <= 255) && ($4 >= 0 && $4 <= 255) && ($5 >= 0 && $5 <= 255)) {
+	       return $1;
 	   }
        else { return undef; }
    }
@@ -1604,7 +1583,131 @@ sub _check_profile_syntax {
 			die "Invalid input profile: $key is not a valid profile key\n"
 		}
 	}
-    }
+}
+
+# Figure out whether the data is a hash reference of a CGI object and return it has a hash
+sub _get_data {
+	my $data = shift;
+	require UNIVERSAL;
+	if (UNIVERSAL::isa($data,'CGI')) {
+		my %return;
+		# make sure object supports param()
+		defined($data->UNIVERSAL::can('param')) or
+		croak("Data::FormValidator->validate called with CGI object which lacks a param() method!");
+		foreach my $k ($data->param()){
+			# we expect param to return an array if there are multiple values
+			my @v = $data->param($k);
+			$return{$k} = scalar(@v)>1 ? \@v : $v[0];
+		}
+		return %return;
+	}
+	# otherwise, it's already a hash reference
+	else {
+		return %$data;	
+	}
+}
+
+# apply filter, modifying %valid by reference
+sub _filter_apply {
+	my ($valid,$field,$filter) = @_;
+	die 'wrong number of arguments passed to _filter_apply' unless (scalar @_ == 3);
+	if (ref $valid->{$field}) {
+		for (my $i = 0; $i < @{ $valid->{$field} }; $i++) {
+			$valid->{$field}->[$i] = $filter->( $valid->{$field}->[$i] );
+		}
+	}
+	else {
+		$valid->{$field} = $filter->( $valid->{$field} );
+	}
+}
+
+sub _constraint_hash_build {
+	my ($field,$constraint_spec,$untaint_this) = @_;
+	die "_constraint_apply recieved wrong number of arguments" unless (scalar @_ == 3);
+
+	my	$c = {
+			name 		=> $constraint_spec,
+			constraint  => $constraint_spec, 
+		};
+
+
+   # constraints can be passed in directly via hash
+	if (ref $c->{constraint} eq 'HASH') {
+			$c->{constraint} = $constraint_spec->{constraint};
+			$c->{name}       = $constraint_spec->{name};
+			$c->{params}     = $constraint_spec->{params};
+	}
+
+	# Check for regexp constraint
+	if ( $c->{constraint} =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ ) {
+		#If untainting return the match otherwise return result of match
+               my $return_code = ($untaint_this) ? 'return (substr($_[0], $-[0], $+[0] - $-[0]) =~ m/(.*)/s)[0] if defined($-[0]);' : '';
+		$c->{constraint} = eval 'sub { $_[0] =~ '. $c->{constraint} . ';' . $return_code . '}';
+		die "Error compiling regular expression $c->{constraint}: $@" if $@;
+	}
+	# check for code ref
+	elsif (ref $c->{constraint} eq 'CODE') {
+		# do nothing, it's already a code ref
+	}
+	else {
+		# Qualify symbolic reference
+
+		#If untaint is turned on call match_* sub directly. 
+		if ($untaint_this) {
+			$c->{constraint} = *{qualify_to_ref("match_$c->{name}")}{CODE};
+		}
+		else {
+			# try to use match_* first
+			my $routine = 'match_'.$c->{constraint};			
+			if (defined *{qualify_to_ref($routine)}{CODE}) {
+				$c->{constraint} = eval 'sub { no strict qw/refs/; return defined &{"match_'.$c->{name}.'"}(@_)}';
+			}
+			# match_* doesn't exist; if it is supposed to be from the
+			# validator_package(s) there may be only valid_* defined
+			else {
+				$c->{constraint} = *{qualify_to_ref('valid_'.$c->{constraint})}{CODE};
+			}
+		}
+	}
+
+	return $c;
+
+}
+
+sub _constraint_input_build {
+	my ($c,$value) = @_;
+	die "_constraint_input_build recieved wrong number of arguments" unless (scalar @_ == 2);
+
+	my @params;
+	if (defined $c->{params}) {
+		foreach my $fname (_arrayify($c->{params})) {
+			# If the value is passed by reference, we treat it literally
+			push @params, (ref $fname) ? $fname : $value 
+		}
+	}
+	else {
+		push @params, $value;
+	}
+	return @params;
+}
+
+sub _constraint_check_match {
+	my 	($c,$params) = @_;
+	die "_constraint_check_match recieved wrong number of arguments" unless (scalar @_ == 2);
+
+	if (my $match = $c->{constraint}->( @$params )) { 
+		return $match;
+	}
+	else {
+		return 
+		undef,	
+		{
+			failed  => 1,
+			name	=> $c->{name},
+		};
+	}
+}
+
 
 1;
 
@@ -1616,8 +1719,10 @@ __END__
 
 =head1 SEE ALSO
 
-L<Data::FormValidator::Tutorial>, perl(1)
+L<Data::FormValidator::Tutorial>, L<Params::Validate>, L<Data::Verify>, perl(1)
 
+This document has also been translated into Japanese. The latest version is available here:
+http://perldoc.jp/docs/modules/
 
 =head1 CREDITS
 

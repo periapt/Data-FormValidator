@@ -24,7 +24,7 @@ my $input_profile = {
 my $validator = new Data::FormValidator({default => $input_profile});
 
 my $input_hashref = {
-	my_zipcode_field => '402015', # <!- born to losse
+	my_zipcode_field => '402015', # <!- born to lose
 };
 
 my ($valids, $missings, $invalids, $unknowns);
@@ -63,6 +63,7 @@ for (@$invalids) {
 		}
 	}
 	use Data::Dumper;
+	warn Dumper('invalid',$invalids);
 	print "not ok 3\n";
 }
 

@@ -1,5 +1,16 @@
 Revision history for Perl extension Data::FormValidator.
 
+1.93
+	- New Feature: Keys with multiple values are now supported
+	- New Feature: A CGI.pm object can now be used to provide the input data
+	- Bug Fix: pattern matching is faster in some cases now by not using $&
+	  (Tony Stubblebine)
+	- Bug Fix: better support for using valid_* packages imported from other
+	  packages. (Alexander Solovey)
+	- added link to demo site in documentation
+	- fixed typo in documentation example (Kato Atsushi)
+	- added link to Japanese translatation of the documents (Kato Atsushi)
+
 1.92 Sun Dec 22 2002
     - support for untainting data (Tony Stubblebine)
 	- documentation typo fixes (Charlie Garrison)
