@@ -50,3 +50,4 @@ t/upload_post_text.txt
 t/30_filter_definedness.t
 test/00_base.badformat
 test/00_base.profile
+.releaserc

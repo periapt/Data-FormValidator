@@ -1,7 +1,10 @@
 #########################
 
-use Test::More tests => 14;
-BEGIN { use_ok('Data::FormValidator::Constraints::Upload') };
+use Test::More tests => 15;
+BEGIN { 
+    use_ok(CGI);
+    use_ok('Data::FormValidator::Constraints::Upload') 
+};
 
 #########################
 
@@ -32,7 +35,8 @@ BEGIN { use_ok('Data::FormValidator::Constraints::Upload') };
           'HTTP_HOST' => 'www.perl.org'
 );
 
-use CGI;
+diag "testing with CGI.pm version: $CGI::VERSION";
+
 open(IN,'<t/upload_post_text.txt') || die 'missing test file';
 
 *STDIN = *IN;

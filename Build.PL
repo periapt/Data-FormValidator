@@ -29,6 +29,8 @@ my $class = Module::Build->subclass(
 
 
 $class->new(
+    create_makefile_pl  => 'traditional', 
+    dist_author         => 'Mark Stosberg <mark@summersault.com>',
 	module_name => 'Data::FormValidator',
 	license => 'perl',
 	requires => {
@@ -37,7 +39,7 @@ $class->new(
 		'Date::Calc'	 => 0,
 		'File::MMagic'   => 1.17,
 		'MIME::Types'	 => 1.005,
-		'Regexp::Common' => 0 
+		'Regexp::Common' => 0,
 	},
 )->create_build_script;
 

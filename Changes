@@ -1,3 +1,14 @@
+3.15
+    - Instead of explicting supporting CGI and Apache::Request objects, now any
+      object which has a param() method can be used. In particular, this allows
+      CGI::Simple to be used. 
+
+      Before, if you used an object which was not CGI or Apache::Request, it would
+      treat the object as a hash reference and possibly work. Now it will die
+      with a diagnostic message in this case.  (Cees Hek)
+
+    - Many documentation typo fixes (Cees Hek and Timothy Appnel)
+
 3.14
     [BUG FIXES]
     - fixed POD syntax issue in Constraints.pm that was causing a 'make test' 

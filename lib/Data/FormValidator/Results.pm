@@ -21,7 +21,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 use vars qw/$AUTOLOAD $VERSION/;
 use Symbol;
 
-$VERSION = 3.13;
+$VERSION = 3.15;
 
 =pod
 
@@ -832,16 +832,18 @@ sub _constraint_check_match {
 	}
 }
 
-# Figure out whether the data is a hash reference of a CGI or Apache::Request object and return it has a hash
+# Figure out whether the data is a hash reference of a param-capable object and return it has a hash
 sub _get_data {
 	my ($self,$data) = @_;
 	$self->{__INPUT_DATA} = $data;
 	require UNIVERSAL;
-	if (UNIVERSAL::isa($data,'CGI') || UNIVERSAL::isa($data,'Apache::Request') ) {
+
+    # This checks whether we have an object or not.
+    if (UNIVERSAL::isa($data,'UNIVERSAL') ) {
 		my %return;
 		# make sure object supports param()
 		defined($data->UNIVERSAL::can('param')) or
-		croak("Data::FormValidator->validate called with CGI or Apache::Request object which lacks a param() method!");
+		croak("Data::FormValidator->validate() or check() called with an object which lacks a param() method!");
 		foreach my $k ($data->param()){
 			# we expect param to return an array if there are multiple values
 			my @v = $data->param($k);

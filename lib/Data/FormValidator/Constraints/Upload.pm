@@ -20,7 +20,7 @@ use vars qw($VERSION @ISA @EXPORT);
 	valid_file_max_bytes	
 );
 
-$VERSION = '0.07';
+$VERSION = '0.08';
 
 sub valid_file_format {
 	my $self = shift;
@@ -35,8 +35,10 @@ sub valid_file_format {
 	}
 
 	my $q = $self->get_input_data;
-	$q->isa('CGI') || $q->isa('Apache::Request') ||
-		die 'valid_file_format: data is not a CGI or Apache::Request object';
+
+    require UNIVERSAL;
+	$q->UNIVERSAL::can('param')||
+		die 'valid_file_format: data object missing param() method';
 
 	my $field = $self->get_current_constraint_field;
 
@@ -110,8 +112,9 @@ sub valid_image_max_dimensions {
 	($max_height > 0) || die 'image_max_dimensions: maximum height must be > 0';
 
 	my $q = $self->get_input_data;
-	$q->isa('CGI') || $q->isa('Apache::Request') ||
-		die 'valid_file_format: data is not a CGI or Apache::Request object';
+    require UNIVERSAL;
+	$q->UNIVERSAL::can('param')||
+		die 'valid_image_max_dimensions: data object missing param() method';
 
 	my $field = $self->get_current_constraint_field;
 
@@ -153,8 +156,9 @@ sub valid_file_max_bytes {
 	my $max_bytes = $max_bytes_ref || 1024*1024; # default to 1 Meg
 
 	my $q = $self->get_input_data;
-	$q->isa('CGI') || $q->isa('Apache::Request') ||
-		die 'valid_file_format: data is not a CGI or Apache::Request object';
+    require UNIVERSAL;
+	$q->UNIVERSAL::can('param') ||
+		die 'valid_file_max_bytes: object missing param() method';
 
 	my $field = $self->get_current_constraint_field;
 
