@@ -23,5 +23,6 @@ t/14_multiple_constraints.t
 t/15_literal_param_constraints.t
 t/16_cgi_object.t
 t/17_multi_valued_keys.t
+t/18_constraint_refs.t
 t/ValidatorPackagesTest1.pm
 t/ValidatorPackagesTest2.pm

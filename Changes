@@ -1,6 +1,14 @@
 Revision history for Perl extension Data::FormValidator.
 
-1.93
+2.00 Sat Mar 22 2003
+	- Bug Fix: Fixed bug where all code references were treated as if the were
+	  using the 'multiple constraints' feature.  This bug was likely introduced
+	  in 1.93 (Chris Spiegel)
+	- Bug Fix: Fixed bug which caused a failllure when using some sides of
+	  subroutine constraints within the "multiple constraints" syntax. 
+	  (Chris Spiegal}
+
+1.93 Sun Mar 09 2003
 	- New Feature: Keys with multiple values are now supported
 	- New Feature: A CGI.pm object can now be used to provide the input data
 	- Bug Fix: pattern matching is faster in some cases now by not using $&

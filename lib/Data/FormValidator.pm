@@ -20,12 +20,12 @@
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms same terms as perl itself.
 #
-#    $Header: /cvsroot/cascade/dfv/lib/Data/FormValidator.pm,v 1.7 2003/03/02 21:20:21 markjugg Exp $
+#    $Header: /cvsroot/cascade/dfv/lib/Data/FormValidator.pm,v 1.8 2003/03/23 02:57:23 markjugg Exp $
 package Data::FormValidator;
 
 use vars qw( $VERSION $AUTOLOAD);
 
-$VERSION = '1.93';
+$VERSION = '2.00';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -853,7 +853,7 @@ sub validate {
 
        next unless exists $valid{$field};
 
-	   my $is_constraint_list = 1 if ref $constraint_list;
+	   my $is_constraint_list = 1 if (ref $constraint_list eq 'ARRAY');
 	   my $untaint_this =  ($untaint_all || $untaint_hash{$field} || 0);
 
 	   my @invalid_list;
@@ -1654,13 +1654,13 @@ sub _constraint_hash_build {
 
 		#If untaint is turned on call match_* sub directly. 
 		if ($untaint_this) {
-			$c->{constraint} = *{qualify_to_ref("match_$c->{name}")}{CODE};
+			$c->{constraint} = *{qualify_to_ref("match_$c->{constraint}")}{CODE};
 		}
 		else {
 			# try to use match_* first
 			my $routine = 'match_'.$c->{constraint};			
 			if (defined *{qualify_to_ref($routine)}{CODE}) {
-				$c->{constraint} = eval 'sub { no strict qw/refs/; return defined &{"match_'.$c->{name}.'"}(@_)}';
+				$c->{constraint} = eval 'sub { no strict qw/refs/; return defined &{"match_'.$c->{constraint}.'"}(@_)}';
 			}
 			# match_* doesn't exist; if it is supposed to be from the
 			# validator_package(s) there may be only valid_* defined
