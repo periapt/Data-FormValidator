@@ -1,5 +1,8 @@
 Revision history for Perl extension Data::FormValidator.
 
+1.5  Thu Jun 28 2001
+	- Added more flexible dependency system (Ade Olonoh)
+
 1.4  Fri Jun 22 2001
 	- Fixed bug with code references (T.J. Mather)
 

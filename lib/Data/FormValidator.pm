@@ -211,7 +211,10 @@ Here is an example of a valid input profiles specification :
 	customer_billing_infos => {
 	     optional	    => [ "cc_no" ],
 	     dependencies   => {
-		"cc_no" => [ qw( cc_type cc_exp ) ],
+            "cc_no" => [ qw( cc_type cc_exp ) ],
+            "pay_type" => {
+                check => [ qw( check_no ) ],
+             }
 	     },
 	     constraints => {
 		cc_no      => {  constraint  => "cc_number",
@@ -268,10 +271,14 @@ to be optional, you could use the regular expression, /^user_/
 
 This is an hash reference which contains dependencies information.
 This is for the case where one optional fields has other requirements.
-For example, if you enter your credit card number, the field cc_exp
-and cc_type should also be present. Any fields in the dependencies
-list that is missing when the target is present will be reported as
-missing.
+The dependencies can be specified with an array reference.  For example,
+if you enter your credit card number, the field cc_exp and cc_type should
+also be present.  If the dependencies are specified with a hash reference
+then the additional constraint is added that the optional field must equal
+a key for the dependencies to be added. For example, if the pay_type field
+is equal to "check" then the check_no field is required.  Any fields in
+the dependencies list that is missing when the target is present will be
+reported as missing.
 
 =item dependency_groups
 
@@ -479,11 +486,22 @@ sub validate {
     # Check if the presence of some fields makes other optional
     # fields required.
     while ( my ( $field, $deps) = each %{$profile->{dependencies}} ) {
-	if ( $valid{$field} ) {
-	    foreach my $dep ( _arrayify($deps) ) {
-		$required{$dep} = 1;
-	    }
-	}
+        if ($valid{$field}) {
+            if (ref($deps) eq 'HASH') {
+                foreach my $key (keys %$deps) {
+                    if($valid{$field} eq $key){
+		        foreach my $dep (_arrayify($deps->{$key})){
+                            $required{$dep} = 1;
+                        }
+                    }
+                }
+            }
+            else {
+                foreach my $dep (_arrayify($deps)){
+                    $required{$dep} = 1;
+                }
+            }
+        }
     }
 
     # check dependency groups
