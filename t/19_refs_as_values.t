@@ -30,7 +30,7 @@ my ($valids, $missings, $invalids, $unknowns) = ({},[],[],[]);
 ($valids, $missings, $invalids, $unknowns) = $validator->validate($input_hashref, 'default');
 
 # empty strings in arrays should be set to "undef"
-print "not " if  (exists $valids->{arrayref}->[0]);
+print "not " if  (defined $valids->{arrayref}->[0]);
 print "ok 1\n";
 
 # hash refs and code refs should be ok.

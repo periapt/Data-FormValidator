@@ -1,5 +1,9 @@
 Revision history for Perl extension Data::FormValidator.
 
+2.03 Thu Apr 10 2003
+     - Bug Fix: use of "delete" syntax with multiple values updated
+	 	to be backwards compatible with Perl 5.005 (Jonathan Buhacoff) 
+
 2.02 Wed Apr 09 2003
 	- Bug Fix: fixed bug with required_regexp and optional_regexp triggered  
 	if there is no required_regexp or optional_regexp in the profile *and*

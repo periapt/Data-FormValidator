@@ -25,7 +25,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION $AUTOLOAD);
 
-$VERSION = '2.02';
+$VERSION = '2.03';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -757,7 +757,7 @@ sub validate {
 		if (ref $valid{$field}) {
 			if ( ref $valid{$field} eq 'ARRAY' ) {
 				for (my $i = 0; $i < scalar @{ $valid{$field} }; $i++) {
-					delete $valid{$field}->[$i] unless length $valid{$field}->[$i];
+					$valid{$field}->[$i] = undef unless length $valid{$field}->[$i];
 				}
 			}
 		}
