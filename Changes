@@ -1,3 +1,8 @@
+3.50 Mon Jan 12 2003 
+    - No functionality changes since 3.49_1, I'm just declaring it stable.
+    - I did sneak in the addition of a $VERSION in a couple included modules
+    where none had been provided before.
+
 3.49_1
 	[THINGS THAT MIGHT BREAK YOUR CODE]
 	- A change has been made to Data::FormValidator::Constraints::Upload,

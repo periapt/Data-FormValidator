@@ -21,7 +21,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 use vars qw/$AUTOLOAD $VERSION/;
 use Symbol;
 
-$VERSION = 3.49_1;
+$VERSION = 3.50;
 
 =pod
 
@@ -750,7 +750,7 @@ sub _arrayify {
 
    if ( ref $val eq 'ARRAY' ) {
 		# if it's a reference, return an array unless it points an empty array. -mls
-                return (length $val->[0]) ? @$val : ();
+                return (defined $val->[0]) ? @$val : ();
    } 
    else {
 		# if it's a string, return an array unless the string is missing or empty. -mls

@@ -22,7 +22,9 @@
 #
 package Data::FormValidator::Constraints;
 use strict;
-use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS/;
+use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
+
+$VERSION = 3.50;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -556,7 +558,7 @@ means users need to pass in the name of the field being validated. Besides
 adding unnecessary syntax to the user interface, it won't work in conjunction
 with C<constraint_regexp_map>.
 
-A couple of of useful methods to use on the Data::FormValidator::Results object  are
+A few useful methods to use on the Data::FormValidator::Results object are
 available to you to use inside of your routine.
 
 =over 4
@@ -608,7 +610,10 @@ regular expressions.
 
 =back
 
-=cut
+The C<meta()> method may also be useful to communicate meta data that
+may have been found. See L<Data::FormValidator::Results> for documentation
+of that method.
+
 
 =head1 SEE ALSO
 
