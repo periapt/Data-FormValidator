@@ -1,5 +1,21 @@
-3.15
-    - Instead of explicting supporting CGI and Apache::Request objects, now any
+3.49_1
+	[THINGS THAT MIGHT BREAK YOUR CODE]
+	- A change has been made to Data::FormValidator::Constraints::Upload,
+	and only affects constraints in that module. Meta data will no longer
+	be provided by adding additional "_info" fields to the valid hash.
+	The same data is now available through the new meta() method of the
+	Data::FormValidator::Results object. 
+
+	[NEW FEATURES]
+	- A new meta() method has been added to the Data::FormValidator::Results
+	class. This function allows constraints to communicate meta data
+	they discover about the values during the validation process. 
+	For example, a file size may be discovered while checking to see
+	if the file size is too large. This is only currently being
+	used in Data::FormValidator::Constraints::Upload.
+
+3.15 Sun Nov 03 2003
+    - Instead of explictly supporting CGI and Apache::Request objects, now any
       object which has a param() method can be used. In particular, this allows
       CGI::Simple to be used. 
 
@@ -8,6 +24,10 @@
       with a diagnostic message in this case.  (Cees Hek)
 
     - Many documentation typo fixes (Cees Hek and Timothy Appnel)
+
+    - The dependency on Module::Build to install the distribution has been
+      removed. Now either Module::Build or the traditional MakeMaker system can
+      be used.
 
 3.14
     [BUG FIXES]

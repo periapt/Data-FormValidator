@@ -21,7 +21,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 use vars qw/$AUTOLOAD $VERSION/;
 use Symbol;
 
-$VERSION = 3.15;
+$VERSION = 3.49_1;
 
 =pod
 
@@ -602,6 +602,61 @@ sub msgs {
 
 }
 
+=pod
+
+=head1 meta()
+
+In a few cases, a constraint may discover meta data that is useful
+to access later. For example, when using L<Data::FormValidator::Constraints::Upload>, several bits of meta data are discovered about files in the process
+of validating. These can include "bytes", "width", "height" and "extension".
+The C<meta()> function is used by constraint methods to set this data. It's
+also used to access this data. Here are some examples.
+
+ # return all field names that have meta data
+ my @fields = $results->meta();
+
+ # To retrieve all meta data for a field:
+ $meta_href = $results->meta('img');
+ 
+ # Access a particular piece: 
+ $width = $results->meta('img')->{width};
+ 
+Here's how to set some meta data. This is useful to know if you are
+writing your own complex constraint.
+
+	$self->meta('img', {
+		width  => '50',
+		height => '60',
+	});
+
+This function does not currently multi-valued fields. If it 
+does in the future, the above syntax will still work..
+
+=cut
+
+sub meta {
+	my $self  = shift;
+	my $field = shift;
+	my $data  = shift;
+
+	# initialize if it's the first call
+	$self->{__META} ||= {};
+
+	if ($data) {
+		(ref $data eq 'HASH') or die 'meta: data passed not a hash ref'; 
+        $self->{__META}{$field} = $data;
+	}
+
+
+	# If we are passed a field, return data for that field
+	if ($field) {
+		return $self->{__META}{$field};
+	}
+	# Otherwise return a list of all fields that have meta data
+	else {
+		return keys %{ $self->{__META} };
+	}
+}
 
 # These are documented in ::Constraints, in the section
 # on writing your own routines. It was more intuitive

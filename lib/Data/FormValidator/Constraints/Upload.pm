@@ -20,7 +20,7 @@ use vars qw($VERSION @ISA @EXPORT);
 	valid_file_max_bytes	
 );
 
-$VERSION = '0.08';
+$VERSION = '0.50_01';
 
 sub valid_file_format {
 	my $self = shift;
@@ -92,9 +92,9 @@ sub valid_file_format {
 
 
    # Add the mime_type and extension to the valid data set
-   my $info = $self->valid($field.'_info') || {};
+   my $info = $self->meta($field) || {};
    $info = { %$info, mime_type => $uploaded_mt, extension => ".$ext" };
-   $self->valid($field.'_info',$info);
+   $self->meta($field,$info);
 
    return $allowed_types{$mt};
 }
@@ -137,10 +137,9 @@ sub valid_image_max_dimensions {
 
    
    # Add the dimensions to the valid hash
-   my $info = $self->valid($field.'_info') || {};
+   my $info = $self->meta($field) || {};
    $info = { %$info, width => $width, height => $height };
-   $self->valid($field.'_info',$info);
-
+   $self->meta($field,$info);
 
     return (($width <= $$max_width_ref) or ($height <= $$max_height_ref));
 }
@@ -170,9 +169,9 @@ sub valid_file_max_bytes {
    my $file_size = (stat ($img))[7];
 
    # Add the size to the valid hash
-   my $info = $self->valid($field.'_info') || {};
+   my $info = $self->meta($field) || {};
    $info = { %$info, bytes => $file_size  };
-   $self->valid($field.'_info',$info);
+   $self->meta($field,$info);
 
    return ($file_size <= $max_bytes);
 }
@@ -234,11 +233,9 @@ it tries to validate JPEG, GIF and PNG images. The params are:
 		mime_types => [qw!image/jpeg image/gif image/png!],
 	}],
 
-Calling this function has the side effect of adding two new parameters to the
-Data::FormValidator valid hash. For a field named 'image_name',
-'image_name_info' will be added if it doesn't already exist.
-The keys 'extension' and 'mime_type' will be added to the
-hash that this field references. 
+Calling this function sets some meta data which can be retrieved through
+the C<meta()> method of the Data::FormValidator::Results object.
+The meta data added is C<extension> and C<mime_type>.
 
 The MIME type of the file will first be tried to figured out by using the
 <File::MMagic> module to examine the file. If that doesn't turn up a result,
@@ -257,11 +254,9 @@ it checks to make sure files are smaller than 1 Meg. The params are:
 	constraint_method => 'file_max_bytes',
 	params => [\1024], # 1 k
 
-Calling this function has the side effect of adding a new paramater to the
-Data::FormValidator valid hash. For a field named 'image_name',
-'image_name_info' will be added if it doesn't already exist.  A key named
-'bytes' will be added to the hash that this field references. 
-
+Calling this function sets some meta data which can be retrieved through
+the C<meta()> method of the Data::FormValidator::Results object.
+The meta data added is C<bytes>.
 
 =item image_max_dimensions
 
@@ -274,11 +269,9 @@ some maximum dimensions. The params are:
 	constraint_method => 'image_max_dimensions',
 	params => [\200,\200],
 
-Calling this function has the side effect of adding two new parameters to the
-Data::FormValidator valid hash. For a field named 'image_name',
-'image_name_info' will be added if it doesn't already exist.
-The keys 'width' and 'height' will be added to the
-hash that this field references. 
+Calling this function sets some meta data which can be retrieved through
+the C<meta()> method of the Data::FormValidator::Results object.
+The meta data added is C<width> and C<height>.
 
 =back
 

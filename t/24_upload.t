@@ -1,6 +1,6 @@
 #########################
 
-use Test::More tests => 15;
+use Test::More tests => 17;
 BEGIN { 
     use_ok(CGI);
     use_ok('Data::FormValidator::Constraints::Upload') 
@@ -69,27 +69,35 @@ my $default = {
 	};
 
 my $dfv = Data::FormValidator->new({ default => $default});
-my ($valid,$missing,$invalid);
+my ($results);
 eval {
-	($valid,$missing,$invalid) = $dfv->validate($q, 'default');
+	$results = $dfv->check($q, 'default');
 };
 warn $@ unless ok(not $@);
 
+my $valid   = $results->valid;
+my $invalid = $results->invalid; # as hash ref
+my @invalids = $results->invalid;
+my $missing = $results->missing;
+
 
 # Test to make sure hello world failes because it's the wrong type
-ok((grep {/hello_world/} @$invalid), 'expect format failure');
+ok((grep {/hello_world/} @invalids), 'expect format failure');
 
 
 # Make sure 100x100 passes because it's the right type and size
 ok(exists $valid->{'100x100_gif'});
 
-ok($valid->{'100x100_gif_info'}->{extension}, 'setting extension in valid hash ');
-ok($valid->{'100x100_gif_info'}->{mime_type}, 'setting mime_type in valid hash');
+my $meta = $results->meta('100x100_gif');
+is(ref $meta, 'HASH', 'meta() returns hash ref');
+
+ok($meta->{extension}, 'setting extension meta data');
+ok($meta->{mime_type}, 'setting mime_type meta data');
 
 # 300x300 should fail because it's too big
-ok((grep {'300x300'} @$invalid), 'max_bytes');
+ok((grep {'300x300'} @invalids), 'max_bytes');
 
-ok($valid->{'100x100_gif_info'}->{bytes}>0, 'setting bytes in valid hash');
+ok($results->meta('100x100_gif')->{bytes}>0, 'setting bytes meta data');
 
 
 # Revalidate to usefully re-use the same fields
@@ -109,13 +117,21 @@ my $profile_2  = {
 };
 
 $dfv = Data::FormValidator->new({ profile_2 => $profile_2});
-($valid,$missing,$invalid) = $dfv->validate($q, 'profile_2');
+eval {
+	$results = $dfv->check($q, 'profile_2');
+};
+warn $@ unless ok(not $@);
+
+$valid   = $results->valid;
+$invalid = $results->invalid; # as hash ref
+@invalids = $results->invalid;
+$missing = $results->missing;
 
 ok(exists $valid->{'100x100_gif'}, 'expecting success with max_dimensions');
-ok((grep {'300x300'} @$invalid), 'expecting failure with max_dimensions');
+ok((grep {'300x300'} @invalids), 'expecting failure with max_dimensions');
 
-ok($valid->{'100x100_gif_info'}->{width}>0, 'setting width in valid hash');
-ok($valid->{'100x100_gif_info'}->{width}>0, 'setting height in valid hash');
+ok( $results->meta('100x100_gif')->{width} > 0, 'setting width as meta data');
+ok( $results->meta('100x100_gif')->{width} > 0, 'setting height as meta data');
 
 # Now test trying constraint_regxep_map
 my $profile_3  = {
