@@ -4,6 +4,11 @@
 # for input data when used with multiple constraints
 # as 'params'
 
+# note: this relies on the constraint built_to_fail
+# being evaluated before expected_to_succeed. Which
+# relies on the order on which perl returns the keys
+# from each %{ $profile->{constraints} }
+
 use Test::More tests => 2;
 use Data::FormValidator;
 use strict;
@@ -18,23 +23,27 @@ my %profile = (
     depart_date
     return_date
     /],
-  filters => ['trim'],
+  field_filters => {
+      depart_date => sub { my $v = shift; $v =~ s/XXX//; $v;  }
+  },
   constraints => {
       depart_date => {
         name       => 'expected_to_succeed',
+        params     => [qw/depart_date return_date/],
         constraint => sub {
             my ($depart,$return) = @_;
+            warn "depart: $depart";
             return ($depart < $return);
         },
-        params     => [qw/depart_date return_date/],
       },
       return_date => {
         name       => 'built_to_fail',
+        params     => [qw/depart_date return_date/],
         constraint => sub {
             my ($depart,$return) = @_;
+            warn "depart: $depart";
             return ($depart > $return);
         },
-        params     => [qw/depart_date return_date/],
       },
   },
   missing_optional_valid => 1,
@@ -53,4 +62,6 @@ my $results = Data::FormValidator->check(\%data, \%profile);
 ok(!$results->valid('return_date'), 'first constraint applied intentionally fails');
 ok($results->valid('depart_date'),  
     'second constraint still has access to value of field used in first failed constraint.');
+
+
 
