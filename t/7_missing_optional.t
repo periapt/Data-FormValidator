@@ -13,6 +13,9 @@ my $input_profile = {
 		       constraint_regexp_map => {
 				      '/^email/'  => "email",
 			   },
+			   constraints => {
+				 not_filled   => 'phone',
+			   },
 				missing_optional_valid => 1,	   
 			};
 
@@ -39,7 +42,7 @@ if($@){
 print "ok 1\n";
 
 # "not_filled" should appear valids now. 
-unless (defined $valids->{'not_filled'}){
+unless (exists $valids->{'not_filled'}){
   print "not ";
 }
 print "ok 2\n";

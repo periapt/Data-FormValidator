@@ -1,5 +1,9 @@
 Revision history for Perl extension Data::FormValidator.
 
+1.9  Sun Feb 17 2002
+	- Fixed bug introduced in 1.8 which caused missing optional fields to 
+	  wrongly subjected to constraint checking
+
 1.8   Thu Feb 14 2002
 	- Added link to Data::FormValidator::Tutorial in SEE ALSO section
 	- Added "missing_optional_valid" flag to profiles to allow missing

@@ -25,7 +25,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION );
 
-$VERSION = 1.8;
+$VERSION = 1.9;
 
 
 require Exporter;
@@ -485,13 +485,11 @@ sub validate {
 		  $optional{$k} =  1;
        }
     }
-
-    # Remove all empty fields, unless missing_optional_valid is true and the field is optional 
-    foreach my $field ( keys %valid ) {
-		 unless ($profile->{missing_optional_valid} and $optional{$field}) {
-			 delete $valid{$field} unless length $valid{$field};
-		 }
-    }
+	
+	# Remove all empty fields
+	foreach my $field ( keys %valid ) {
+		delete $valid{$field} unless length $valid{$field};
+	}
 
     # Check if the presence of some fields makes other optional
     # fields required.
@@ -556,42 +554,50 @@ sub validate {
 
     # Check constraints
     while ( my ($field,$constraint_spec) = each %{$profile->{constraints}} ) {
-	my ($constraint,@params);
-	if ( ref $constraint_spec eq "HASH" ) {
-	    $constraint = $constraint_spec->{constraint};
-	    foreach my $fname ( _arrayify($constraint_spec->{params})  ) {
-		push @params, $valid{$fname};
-	    }
-	} else {
-	    $constraint = $constraint_spec;
-	    @params     = ( $valid{$field} );
-	}
-	next unless exists $valid{$field};
-
-	unless ( ref $constraint ) {
-	    # Check for regexp constraint
-	    if ( $constraint =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ ) {
-		my $sub = eval 'sub { $_[0] =~ '. $constraint . '}';
-		die "Error compiling regular expression $constraint: $@" if $@;
-		$constraint = $sub;
-		# Cache for next use
+		my ($constraint,@params);
 		if ( ref $constraint_spec eq "HASH" ) {
-		    $constraint_spec->{constraint} = $sub;
+			$constraint = $constraint_spec->{constraint};
+			foreach my $fname ( _arrayify($constraint_spec->{params})  ) {
+			push @params, $valid{$fname};
+			}
 		} else {
-		    $profile->{constraints}{$field} = $sub;
+			$constraint = $constraint_spec;
+			@params     = ( $valid{$field} );
 		}
-	    } else {
-		# Qualify symbolic reference
-		$constraint = "valid_" . $constraint;
-	    }
-	}
-	no strict 'refs';
+		next unless exists $valid{$field};
 
-	unless ( $constraint->( @params ) ) {
-	    delete $valid{$field};
-	    push @invalid, $field;
+		unless ( ref $constraint ) {
+			# Check for regexp constraint
+			if ( $constraint =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ ) {
+				my $sub = eval 'sub { $_[0] =~ '. $constraint . '}';
+				die "Error compiling regular expression $constraint: $@" if $@;
+				$constraint = $sub;
+				# Cache for next use
+				if ( ref $constraint_spec eq "HASH" ) {
+					$constraint_spec->{constraint} = $sub;
+				} else {
+					$profile->{constraints}{$field} = $sub;
+				}
+			} else {
+				# Qualify symbolic reference
+				$constraint = "valid_" . $constraint;
+			}
+		}
+		no strict 'refs';
+
+		unless ( $constraint->( @params ) ) {
+			delete $valid{$field};
+			push @invalid, $field;
+		}
 	}
+
+    # add back in missing optional fields from the data hash if we need to
+    foreach my $field ( keys %$data ) {
+		if ($profile->{missing_optional_valid} and $optional{$field} and (not exists $valid{$field})) {
+			 $valid{$field} = undef;
+		 }
     }
+
     return ( \%valid, \@missings, \@invalid, \@unknown );
 }
 
