@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '3.00';
+$VERSION = '3.01';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -650,26 +650,21 @@ documention for more information
 
 =head2 msgs
 
- msgs =>{},
-
 B<NOTE:> This part of the interface is still experimental and may change.  Use
 in production code at your own caution. Contact the maintainer with any
 questions or suggestions.
 
-This key is used to transform the output of the invalid and missing
-return values into a single hash reference which has the field names as keys
-and error messages as values. By default, invalid fields have the message
-"Invalid" associated with them while missing fields have the message "Missing"
-associated with them. In the simplest case, this key can simply be defined as a
-reference to a an empty hash, like this:
+This key is used to define parameters related to formatting error messages
+returned to the user.
 
-B<Example>:
+By default, invalid fields have the message "Invalid" associated with them
+while missing fields have the message "Missing" associated with them. 
 
- msgs =>{}
+In the simplest case, nothing needs to be defined here, and the default values
+will be used. 
 
-This will cause the default messages to be used for missing and invalid fields. Some
-default formatting will also be applied, designed for display in an XHTML web
-page. That formatting is as followings:
+The default formatting applied is designed for display in an XHTML web page.
+That formatting is as followings:
 
 	<span style="color:red;font-weight:bold"><span id="dfv_errors">* %s</span></span>
 
@@ -713,7 +708,7 @@ as providing custom messages per field, and handling multiple constraints:
  	any_errors => 'some_errors',
  }
 
-The hash that's prepared can be retreived through the C<msgs> method
+The hash that's prepared can be retrieved through the C<msgs> method
 described in the L<Data::FormValidator::Results> documentation.
 
 =head2 debug

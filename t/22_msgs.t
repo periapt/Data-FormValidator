@@ -1,4 +1,4 @@
-use Test::More tests => 13;
+use Test::More tests => 14;
 use strict;
 
 use Data::FormValidator;
@@ -162,4 +162,17 @@ ok(defined $msgs->{req_1}, 'using default prefix');
 ok(scalar keys %$msgs == 3, 'size of msgs hash'); # 2 errors plus 1 prefix 
 ok(defined $msgs->{err__}, 'any_errors');
 like($msgs->{req_1},qr/Control/,'passing controls to method');
+
+# See what happens when msgs is called with it doesn't appeare in the profile
+my @basic_input = (
+	{
+		field_1 => 'email',
+	},
+	{
+		required => 'field_1',
+
+	});
+my $results = Data::FormValidator->check(@basic_input);
+eval { $results->msgs };
+ok ((not $@), 'calling msgs method without hash definition');
 

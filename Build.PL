@@ -6,7 +6,7 @@ my $class = Module::Build->subclass(
 	 code => q{
 	 	sub ACTION_dist {
 			my $self = shift;
-			`perldoc -t Data::FormValidator>README`;
+			`perldoc -t lib/Data/FormValidator.pm>README`;
 			$self->SUPER::ACTION_dist;
 	 	}
  	},

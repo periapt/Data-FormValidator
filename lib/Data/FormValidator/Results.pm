@@ -551,13 +551,10 @@ sub msgs {
 		die "$0: parameter passed to msgs must be a hash ref";
 	}
 
-#	unless (ref $self->{profile}->{msgs} eq 'HASH') {
-#		warn "msgs without called without msgs definition in validation profile";
-#		return undef;
-#	}
 
 	# Allow msgs to be called more than one to accumulate error messages
 	$self->{msgs} ||= {};
+	$self->{profile}->{msgs} ||= {};
 	$self->{msgs} = { %{ $self->{msgs} }, %$controls };
 
 	my %profile = (
@@ -798,10 +795,17 @@ sub _constraint_hash_build {
 	}
 
 	# Check for regexp constraint
-	if ( $c->{constraint} =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ ) {
+	if ((ref $c->{constraint} eq 'Regexp')
+		or ( $c->{constraint} =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ )) {
 		#If untainting return the match otherwise return result of match
                my $return_code = ($untaint_this) ? 'return (substr($_[0], $-[0], $+[0] - $-[0]) =~ m/(.*)/s)[0] if defined($-[0]);' : '';
-		$c->{constraint} = eval 'sub { $_[0] =~ '. $c->{constraint} . ';' . $return_code . '}';
+		
+		   if (ref $c->{constraint} eq 'Regexp') {
+			   $c->{constraint} = sub { $_[0] =~ $c->{constraint}; eval($return_code) };
+		   }
+		   else {
+			   $c->{constraint} = eval 'sub { $_[0] =~ '. $c->{constraint} . ';' . $return_code . '}';
+		   }
 		die "Error compiling regular expression $c->{constraint}: $@" if $@;
 	}
 	# check for code ref

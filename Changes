@@ -1,3 +1,14 @@
+3.01 Thu May 15 2003
+	This release fixes addresses a couple of issues related to the new support
+	for error message handling through msgs() and "qr" support. If you aren't
+	using these features, there's no need to upgrade. 
+
+	- New Feature: Updated msgs() documentation and removed the requirement
+	that 'msgs' be defined in profile for default formatting to be used with
+	msgs() method call.
+
+	- Bug Fix: Using named constraints wtih the new "qr" support now works.
+
 3.00 Sun May 11 2003
 	- New Feature: added debug option
 	- Make default msgs in "new" constructor work as it was supposed it 2.11_04
