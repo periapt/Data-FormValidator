@@ -9,6 +9,21 @@ my $class = Module::Build->subclass(
 			`perldoc -t lib/Data/FormValidator.pm>README`;
 			$self->SUPER::ACTION_dist;
 	 	}
+
+        sub ACTION_cover {
+            my $self = shift;
+            $self->depends_on('build');
+
+            system qw( cover -delete );
+
+            # sometimes we get failing tests, which makes Test::Harness
+            # die.  catch that
+            eval {
+                local $ENV{PERL5OPT} = "-MDevel::Cover=-summary,0";
+                $self->ACTION_test(@_);
+            };
+            system qw( cover -report html );
+        }
  	},
 );
 

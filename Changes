@@ -1,3 +1,21 @@
+3.13 Sun Nov 02 2003
+    [THINGS THAT MAY BREAK YOUR CODE] 
+    - How the Regexp::Common integration has changed. The old functionality was
+      to match the regular expression as a substring of the field being
+      testing. Now it is more restrictive and only matches the entire string.
+      This is how all the other filters worked, and is probably how you expected
+      the Regexp::Common filters to work as well.
+
+    [BUG FIXES]
+	- uninitialized values in filters no longer cause warnings. (addresses bug #2751).
+    - documentation typo fixes
+
+    [ENHANCEMENTS]
+	- improved syntax to be compatible with Perl 5.005
+    - Added "cover" method to "Build" script. This uses Devel::Cover to generate
+      a coverage report for the script
+    - About 5 new tests for loading profiles from a file
+
 3.12 Tue Jun 22 2003 
 	- don't die in ::Upload if we can't find the tmp file.
 	  Instead, the constraint fails and a warning is emitted. 

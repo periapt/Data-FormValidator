@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '3.12';
+$VERSION = '3.13';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -199,7 +199,7 @@ syntax, but returns a four element array, described as follows
 
 =item valids
 
-This is an hash reference to the valid fields which were submitted in
+This is a hash reference to the valid fields which were submitted in
 the data. The data may have been modified by the various filters specified.
 
 =item missings
@@ -688,9 +688,9 @@ documentation for more information
 
 =head2 msgs
 
-B<NOTE:> This part of the interface is still experimental and may change.  Use
-in production code at your own caution. Contact the maintainer with any
-questions or suggestions.
+B<NOTE:> This part of the interface is newer and may change.  Use in production
+code at your own caution. Contact the maintainer with any questions or
+suggestions.
 
 This key is used to define parameters related to formatting error messages
 returned to the user.
@@ -751,7 +751,7 @@ described in the L<Data::FormValidator::Results> documentation.
 
 =head2 debug
 
-This method is used to print details about is going on to STDERR.
+This method is used to print details about what is going on to STDERR.
 
 Currently only level '1' is used. It provides information about which 
 fields matched constraint_regexp_map. 
@@ -846,7 +846,7 @@ sub load_profiles {
     return if $self->{profiles} and $self->{profiles_mtime} <= $mtime;
 
     $self->{profiles} = do $file;
-    die "Input profiles didn't return an hash ref\n"
+    die "Input profiles didn't return a hash ref\n"
       unless ref $self->{profiles} eq "HASH";
 
     $self->{profiles_mtime} = $mtime;
@@ -931,10 +931,12 @@ L<Params::Validate |Params::Validate> looks like a better choice for validating 
 L<Regexp::Common|Regexp::Common>,
 L<Data::Types|Data::Types>,
 L<Data::Verify|Data::Verify>,
+L<Email::Valid|Email::Valid>,
 L<String::Checker|String::Checker>,
 L<CGI::ArgChecker|CGI::ArgChecker>,
 L<CGI::FormMagick::Validator|CGI::FormMagick::Validator>,
 L<CGI::Validate|CGI::Validate>
+
 
 
 B<Document Translations:>

@@ -84,6 +84,7 @@ Remove white space at the front and end of the fields.
 
 sub filter_trim {
     my $value = shift;
+	return unless defined $value;
 
     # Remove whitespace at the front
     $value =~ s/^\s+//o;
@@ -104,6 +105,7 @@ Runs of white space are replaced by a single space.
 
 sub filter_strip {
     my $value = shift;
+	return unless defined $value;
 
     # Strip whitespace
     $value =~ s/\s+/ /g;
@@ -121,6 +123,8 @@ Remove non digits characters from the input.
 
 sub filter_digit {
     my $value = shift;
+	return unless defined $value;
+
     $value =~ s/\D//g;
 
     return $value;
@@ -136,6 +140,7 @@ Remove non alphanumerical characters from the input.
 
 sub filter_alphanum {
     my $value = shift;
+	return unless defined $value;
     $value =~ s/\W//g;
     return $value;
 }
@@ -150,6 +155,7 @@ Extract from its input a valid integer number.
 
 sub filter_integer {
     my $value = shift;
+	return unless defined $value;
     $value =~ tr/0-9+-//dc;
     ($value) =~ m/([-+]?\d+)/;
     return $value;
@@ -165,6 +171,7 @@ Extract from its input a valid positive integer number.
 
 sub filter_pos_integer {
     my $value = shift;
+	return unless defined $value;
     $value =~ tr/0-9+//dc;
     ($value) =~ m/(\+?\d+)/;
     return $value;
@@ -180,6 +187,7 @@ Extract from its input a valid negative integer number.
 
 sub filter_neg_integer {
     my $value = shift;
+	return unless defined $value;
     $value =~ tr/0-9-//dc;
     ($value) =~ m/(-\d+)/;
     return $value;
@@ -195,6 +203,7 @@ Extract from its input a valid decimal number.
 
 sub filter_decimal {
     my $value = shift;
+	return unless defined $value;
     # This is a localization problem, but anyhow...
     $value =~ tr/,/./;
     $value =~ tr/0-9.+-//dc;
@@ -212,6 +221,7 @@ Extract from its input a valid positive decimal number.
 
 sub filter_pos_decimal {
     my $value = shift;
+	return unless defined $value;
     # This is a localization problem, but anyhow...
     $value =~ tr/,/./;
     $value =~ tr/0-9.+//dc;
@@ -229,6 +239,7 @@ Extract from its input a valid negative decimal number.
 
 sub filter_neg_decimal {
     my $value = shift;
+	return unless defined $value;
     # This is a localization problem, but anyhow...
     $value =~ tr/,/./;
     $value =~ tr/0-9.-//dc;
@@ -246,6 +257,7 @@ Extract from its input a valid number to express dollars like currency.
 
 sub filter_dollars {
     my $value = shift;
+	return unless defined $value;
     $value =~ tr/,/./;
     $value =~ tr/0-9.+-//dc;
     ($value) =~ m/(\d+\.?\d?\d?)/;
@@ -263,6 +275,7 @@ accept digits [0-9], space, comma, minus, parenthesis, period and pound [#].)
 
 sub filter_phone {
     my $value = shift;
+	return unless defined $value;
     $value =~ s/[^\d,\(\)\.\s,\-#]//g;
     return $value;
 }
@@ -277,6 +290,7 @@ Transforms shell glob wildcard (*) to the SQL like wildcard (%).
 
 sub filter_sql_wildcard {
     my $value = shift;
+	return unless defined $value;
     $value =~ tr/*/%/;
     return $value;
 }
@@ -291,6 +305,7 @@ input.
 =cut
 
 sub filter_quotemeta {
+	return unless defined $_[0];
     quotemeta $_[0];
 }
 
@@ -303,6 +318,7 @@ Calls the lc (convert to lowercase) builtin on its input.
 =cut
 
 sub filter_lc {
+	return unless defined $_[0];
     lc $_[0];
 }
 
@@ -315,6 +331,7 @@ Calls the uc (convert to uppercase) builtin on its input.
 =cut
 
 sub filter_uc {
+	return unless defined $_[0];
     uc $_[0];
 }
 
@@ -327,6 +344,7 @@ Calls the ucfirst (Uppercase first letter) builtin on its input.
 =cut
 
 sub filter_ucfirst {
+	return unless defined $_[0];
     ucfirst $_[0];
 }
 

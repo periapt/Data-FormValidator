@@ -57,8 +57,8 @@ VALIDATING INPUT
     follows
 
     valids
-        This is an hash reference to the valid fields which were submitted
-        in the data. The data may have been modified by the various filters
+        This is a hash reference to the valid fields which were submitted in
+        the data. The data may have been modified by the various filters
         specified.
 
     missings
@@ -448,9 +448,9 @@ INPUT PROFILE SPECIFICATION
     Data::FormValidator::Constraints documentation for more information
 
   msgs
-    NOTE: This part of the interface is still experimental and may change.
-    Use in production code at your own caution. Contact the maintainer with
-    any questions or suggestions.
+    NOTE: This part of the interface is newer and may change. Use in
+    production code at your own caution. Contact the maintainer with any
+    questions or suggestions.
 
     This key is used to define parameters related to formatting error
     messages returned to the user.
@@ -513,7 +513,7 @@ INPUT PROFILE SPECIFICATION
     described in the Data::FormValidator::Results documentation.
 
   debug
-    This method is used to print details about is going on to STDERR.
+    This method is used to print details about what is going on to STDERR.
 
     Currently only level '1' is used. It provides information about which
     fields matched constraint_regexp_map.
@@ -621,8 +621,9 @@ SEE ALSO
     Params::Validate looks like a better choice for validating function
     parameters.
 
-    Regexp::Common, Data::Types, Data::Verify, String::Checker,
-    CGI::ArgChecker, CGI::FormMagick::Validator, CGI::Validate
+    Regexp::Common, Data::Types, Data::Verify, Email::Valid,
+    String::Checker, CGI::ArgChecker, CGI::FormMagick::Validator,
+    CGI::Validate
 
     Document Translations:
 

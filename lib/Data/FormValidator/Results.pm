@@ -21,7 +21,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 use vars qw/$AUTOLOAD $VERSION/;
 use Symbol;
 
-$VERSION = 3.11;
+$VERSION = 3.13;
 
 =pod
 
@@ -124,7 +124,7 @@ sub _process {
 			$filter = (ref $filter ? $filter : *{qualify_to_ref("filter_$filter")}{CODE}) ||
 				die "No filter found named: '$filter'";
 			foreach my $field ( keys %valid ) {
-				# apply filter, modifying %valid by reference
+				# apply filter, modifying %valid by reference, skipping undefined values
 				_filter_apply(\%valid,$field,$filter);
 			}
 		}	
@@ -196,12 +196,12 @@ sub _process {
 		if (ref $valid{$field}) {
 			if ( ref $valid{$field} eq 'ARRAY' ) {
 				for (my $i = 0; $i < scalar @{ $valid{$field} }; $i++) {
-					$valid{$field}->[$i] = undef unless length $valid{$field}->[$i];
+					$valid{$field}->[$i] = undef unless (defined $valid{$field}->[$i] and length $valid{$field}->[$i]);
 				}
 			}
 		}
 		else {
-			delete $valid{$field} unless length $valid{$field};
+			delete $valid{$field} unless (defined $valid{$field} and length $valid{$field});
 		}
 	}
 
@@ -652,7 +652,7 @@ sub _create_sub_from_RE {
 	my $untaint_this = shift;
 
 	# This looks like VooDoo to me, but it works. Simplications welcome. -mls 05/26/03 
-	my $return_code = ($untaint_this) ? '; return (substr($_[0], $-[0], $+[0] - $-[0]) =~ m/(.*)/s)[0] if defined($-[0]);' : '';
+	my $return_code = ($untaint_this) ? '; return ($& =~ m/(.*)/s)[0] if defined($`);' : '';
 
 	my $sub;
 	# If it's "qr" style
@@ -704,16 +704,18 @@ sub _arrayify {
 }
 
 # apply filter, modifying %valid by reference
+# We don't bother trying to filter undefined fields.
+# This prevents warnings from Perl. 
 sub _filter_apply {
 	my ($valid,$field,$filter) = @_;
 	die 'wrong number of arguments passed to _filter_apply' unless (scalar @_ == 3);
 	if (ref $valid->{$field} eq 'ARRAY') {
 		for (my $i = 0; $i < @{ $valid->{$field} }; $i++) {
-			$valid->{$field}->[$i] = $filter->( $valid->{$field}->[$i] );
+			$valid->{$field}->[$i] = $filter->( $valid->{$field}->[$i] ) if defined $valid->{$field}->[$i];
 		}
 	}
 	else {
-		$valid->{$field} = $filter->( $valid->{$field} );
+		$valid->{$field} = $filter->( $valid->{$field} ) if defined $valid->{$field};
 	}
 }
 
@@ -864,7 +866,7 @@ sub _create_regexp_common_constraint  {
 
 	no strict "refs";
 	my $re = &$re_name(-keep=>1,@params) || die 'no matching Regexp::Common routine found';
-	return ($self->get_current_constraint_value =~ $re) ? $1 : undef; 
+	return ($self->get_current_constraint_value =~ qr/^$re$/) ? $1 : undef; 
 }
 
 
