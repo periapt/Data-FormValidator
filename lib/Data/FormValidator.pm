@@ -19,15 +19,13 @@
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms same terms as perl itself.
 #
+#    $Header: /cvsroot/cascade/dfv/lib/Data/FormValidator.pm,v 1.3 2001/11/03 18:09:46 markjugg Exp $
 package Data::FormValidator;
 
 use vars qw( $VERSION );
 
-$VERSION = 1.6;
+$VERSION = 1.7;
 
-#BEGIN {
-#    ($VERSION) = '$Revision: 1.6 $' =~ /Revision: ([\d.]+)/;
-#}
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -538,12 +536,13 @@ sub validate {
     }
 
     # add in the constraints from the regexp map 
-    foreach my $k (keys %valid) {
-       foreach my $re (keys %{ $profile->{constraint_regexp_map} }) {
-	  if ($k =~ /$re/) {
-	      $profile->{constraints}{$k} = $profile->{constraint_regexp_map}{$re}; 
-	  }
-       }
+    foreach my $re (keys %{ $profile->{constraint_regexp_map} }) {
+       my $sub = eval 'sub { $_[0] =~ '. $re . '}';
+       die "Error compiling regular expression $re: $@" if $@;
+
+       # find all the keys that match this RE and add a constraint for them
+       map { $profile->{constraints}{$_} = $profile->{constraint_regexp_map}{$re} }
+	 grep { $sub->($_) } (keys %valid);
     }
 
     # Check constraints
@@ -1187,7 +1186,11 @@ program.
 Mark Stosberg contributed a number of enhancements including
 I<required_regexp>, I<optional_regexp> and I<constraint_regexp_map>
 
- 
+=head1 PUBLIC CVS SERVER
+
+Data::FormValidator now has a publicly accessible CVS server provided by
+SourceForge (www.sourceforge.net).  You can access it by going to
+http://sourceforge.net/cvs/?group_id=6582.  You want the module named 'dfv'. 
 
 =head1 AUTHOR
 
@@ -1197,6 +1200,14 @@ All rights reserved.
 Parts Copyright 1996-1999 by Michael J. Heins <mike@heins.net>
 Parts Copyright 1996-1999 by Bruce Albrecht  <bruce.albrecht@seag.fingerhut.com>
 Parts Copyright 2001      by Mark Stosberg <mark@summersault.com>
+
+B<Support Mailing List>
+ 
+If you have any questions, comments, bug reports or feature suggestions,
+post them to the support mailing list!  To join the mailing list, visit 
+http://lists.sourceforge.net/lists/listinfo/cascade-dataform
+
+=head1 LICENSE 
 
 This program is free software; you can redistribute it and/or modify
 it under the terms as perl itself.

@@ -1,5 +1,14 @@
 Revision history for Perl extension Data::FormValidator.
 
+1.7   Sat Nov 03 2001
+        - Fixed broken constraint_regexp_map implementation. If you
+          followed the example syntax in the documentation your regular
+          expression could have failed to match when it should have
+          succeeded. This feature now works as advertised in the
+          documentation. 
+        - Updated documentation to reflect new mailing list and public
+          CVS server.
+
 1.6   Sun Sep 23 2001
 	- Fixed bug with undefined lists by using empty lists instead (Ronald Kimball)
 	- added IP address validation routine (Juan Jose Natera Abreu)
