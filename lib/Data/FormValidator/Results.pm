@@ -20,7 +20,7 @@ use Data::FormValidator::Filters qw/:filters/;
 use Data::FormValidator::Constraints (qw/:validators :matchers/);
 use vars qw/$AUTOLOAD $VERSION/;
 
-$VERSION = 3.54;
+$VERSION = 3.56;
 
 =pod
 
@@ -119,7 +119,7 @@ sub _process {
     foreach my $filter (_arrayify($profile->{filters})) {
 		if (defined $filter) {
 			# Qualify symbolic references
-			$filter = (ref $filter ? $filter : *{qualify_to_ref("filter_$filter")}{CODE}) ||
+			$filter = (ref $filter eq 'CODE' ? $filter : *{qualify_to_ref("filter_$filter")}{CODE}) ||
 				die "No filter found named: '$filter'";
 			foreach my $field ( keys %valid ) {
 				# apply filter, modifying %valid by reference, skipping undefined values
@@ -133,7 +133,7 @@ sub _process {
 		foreach my $filter ( _arrayify($filters)) {
 			if (defined $filter) {
 				# Qualify symbolic references
-				$filter = (ref $filter ? $filter : *{qualify_to_ref("filter_$filter")}{CODE}) ||
+				$filter = (ref $filter eq 'CODE' ? $filter : *{qualify_to_ref("filter_$filter")}{CODE}) ||
 					die "No filter found named '$filter'";
 				
 				# apply filter, modifying %valid by reference
@@ -149,7 +149,7 @@ sub _process {
 		foreach my $filter ( _arrayify($filters)) {
 			if (defined $filter) {
 				# Qualify symbolic references
-				$filter = (ref $filter ? $filter : *{qualify_to_ref("filter_$filter")}{CODE}) ||
+				$filter = (ref $filter eq 'CODE' ? $filter : *{qualify_to_ref("filter_$filter")}{CODE}) ||
 					die "No filter found named '$filter'";
 
 				no strict 'refs';
@@ -387,7 +387,7 @@ sub _process {
 	$self->{valid} ||= {};
     $self->{valid}	=  { %valid , %{$self->{valid}} };
     $self->{missing}	= { map { $_ => 1 } @missings };
-    $self->{unknown}	= { map { $_ => 1 } @unknown };
+    $self->{unknown}	= { map { $_ => $data{$_} } @unknown };
 
 }
 
@@ -532,7 +532,8 @@ is unknown, undef otherwise.
 =cut
 
 sub unknown {
-    return $_[0]{unknown}{$_[1]} if (defined $_[1]);
+    return (wantarray ? _arrayify($_[0]{unknown}{$_[1]}) : $_[0]{unknown}{$_[1]})
+      if (defined $_[1]);
 
     wantarray ? keys %{$_[0]{unknown}} : $_[0]{unknown};
 }
