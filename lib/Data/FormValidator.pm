@@ -25,7 +25,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION $AUTOLOAD);
 
-$VERSION = '2.00';
+$VERSION = '2.01';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -749,8 +749,10 @@ sub validate {
 	# Remove all empty fields
 	foreach my $field (keys %valid) {
 		if (ref $valid{$field}) {
-			for (my $i = 0; $i < scalar @{ $valid{$field} }; $i++) {
-				delete $valid{$field}->[$i] unless length $valid{$field}->[$i];
+			if ( ref $valid{$field} eq 'ARRAY' ) {
+				for (my $i = 0; $i < scalar @{ $valid{$field} }; $i++) {
+					delete $valid{$field}->[$i] unless length $valid{$field}->[$i];
+				}
 			}
 		}
 		else {
