@@ -25,5 +25,6 @@ t/16_cgi_object.t
 t/17_multi_valued_keys.t
 t/18_constraint_refs.t
 t/19_refs_as_values.t
+t/20_careful_exception_handling.t
 t/ValidatorPackagesTest1.pm
 t/ValidatorPackagesTest2.pm

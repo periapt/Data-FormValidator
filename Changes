@@ -1,5 +1,10 @@
 Revision history for Perl extension Data::FormValidator.
 
+2.02 Wed Apr 09 2003
+	- Bug Fix: fixed bug with required_regexp and optional_regexp triggered  
+	if there is no required_regexp or optional_regexp in the profile *and*
+	something exists in $@ (Dom)
+
 2.01 Wed Apr 02 2003
 	- Bug Fix: Fix bug introduced in 1.93 which didn't handle
 		input values appropriately that were references to other things

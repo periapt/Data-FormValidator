@@ -25,7 +25,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION $AUTOLOAD);
 
-$VERSION = '2.01';
+$VERSION = '2.02';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -721,11 +721,17 @@ sub validate {
     my %optional    = map { $_ => 1 } _arrayify($profile->{optional});
 
     # loop through and add fields to %required and %optional based on regular expressions   
-    my $required_re = eval 'sub { $_[0] =~ '. $profile->{required_regexp} . '}' if $profile->{required_regexp};
-    die "Error compiling regular expression $required_re: $@" if $@;
+    my $required_re;
+    if ($profile->{required_regexp}) {
+	$required_re = eval 'sub { $_[0] =~ '. $profile->{required_regexp} . '}';
+	die "Error compiling regular expression $required_re: $@" if $@;
+    }
 
-    my $optional_re = eval 'sub { $_[0] =~ '. $profile->{optional_regexp} . '}' if $profile->{optional_regexp};
-    die "Error compiling regular expression $optional_re: $@" if $@;
+    my $optional_re;
+    if ($profile->{optional_regexp}) {
+	$optional_re = eval 'sub { $_[0] =~ '. $profile->{optional_regexp} . '}';
+	die "Error compiling regular expression $optional_re: $@" if $@;
+    }
 
     foreach my $k (keys %valid) {
        if ($required_re && $required_re->($k)) {
