@@ -1,5 +1,10 @@
 Revision history for Perl extension Data::FormValidator.
 
+2.10.1 Wed Apr 23 2003
+	- Bug Fix: fixed problem with Build.PL which prevented installation
+	  with CPAN autoinstall.Also removed SIGNATURE file which seemed to
+	  related to installation problems.  No code changes.
+
 2.10 Sun Apr 20 2003
 	- New Feature: (EXPERIMENTAL) Added support for returning error messages
 	  for missing and invalid fields (Juan Jose Natera Abreu).

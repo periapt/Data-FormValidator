@@ -1,3 +1,4 @@
+shift(@ARGV) if $ARGV[0] eq 'Build'; # accomodate with CPAN autoinstall
 use Module::Build;
 
 Module::Build->new(
@@ -7,6 +8,5 @@ Module::Build->new(
 		'Test'		  => 0,
 		'Test::More'  => 0,
 	},
-	sign=>1,
 )->create_build_script;
 

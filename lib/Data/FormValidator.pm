@@ -24,7 +24,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION $AUTOLOAD);
 
-$VERSION = '2.10';
+$VERSION = '2.10.1';
 
 require Exporter;
 @ISA = qw(Exporter);
