@@ -1,0 +1,8 @@
+Revision history for Perl extension Data::FormValidator.
+
+1.3  Tue Jun 19 2001
+	- Now maintained Mark Stosberg
+	- Added constraint_regexp_map, required_regexp, optional_regexp
+	- filter functions are exported
+	- Renamed to Data::FormValidator from HTML::FormValidator
+
