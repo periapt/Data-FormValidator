@@ -11,13 +11,17 @@
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms same terms as perl itself.
 #
+#  $Header$
 use strict;
 
 package Data::FormValidator::Results;
 
 use Data::FormValidator::Filters qw/:filters/;
 use Data::FormValidator::Constraints (qw/:validators :matchers/);
+use vars qw/$AUTOLOAD $VERSION/;
 use Symbol;
+
+$VERSION = 3.1;
 
 =pod
 
@@ -88,9 +92,11 @@ sub _process {
 	# msgs() method will need access to the profile
 	$self->{profile} = $profile;
 
+	my %imported_validators;
+
     # import valid_* subs from requested packages
 	foreach my $package (_arrayify($profile->{validator_packages})) {
-		if ( !exists $profile->{imported_validators}{$package} ) {
+		if ( !exists $imported_validators{$package} ) {
 			eval "require $package";
 			if ($@) {
 				die "Couldn't load validator package '$package': $@";
@@ -107,7 +113,7 @@ sub _process {
 					*{qualify_to_ref($sub)} = $subref;
 				}
 			}
-			$profile->{imported_validators}{$package} = 1;
+			$imported_validators{$package} = 1;
 		}
 	}
 
@@ -678,6 +684,7 @@ sub get_current_constraint_field {
 	my $self = shift;
 	return $self->{__CURRENT_CONSTRAINT_FIELD};
 }
+
 =pod
 
 =over 4
@@ -702,6 +709,36 @@ sub get_current_constraint_value {
 	return $self->{__CURRENT_CONSTRAINT_VALUE};
 }
 
+=pod
+
+=over 4
+
+=item get_current_constraint_name
+
+Returns the name of the current constraint being applied
+
+B<Example>:
+
+ my $value = $self->get_current_constraint_name;
+
+This is useful for building a constraint on the fly based on it's name.
+It's used internally as part of the interface to the L<Regexp::Commmon>
+regular expressions.
+
+
+=back
+
+=cut
+
+sub get_current_constraint_name {
+	my $self = shift;
+	return $self->{__CURRENT_CONSTRAINT_NAME};
+}
+
+
+
+
+
 # INPUT: prefix_string, hash reference
 # Copies the hash and prefixes all keys with prefix_string
 # OUTPUT: hash refence
@@ -723,14 +760,28 @@ sub prefix_hash {
 # (which must start with a slash or "m", not a paren)
 sub _create_sub_from_RE {
 	my $re = shift || return undef;
+	my $untaint_this = shift;
+
+	# This looks like VooDoo to me, but it works. Simplications welcome. -mls 05/26/03 
+	my $return_code = ($untaint_this) ? '; return (substr($_[0], $-[0], $+[0] - $-[0]) =~ m/(.*)/s)[0] if defined($-[0]);' : '';
+
 	my $sub;
 	if ($re =~ /^\(/) {
-		$sub = sub { $_[0] =~ $re };
+		$sub = sub { 
+			my $match = $_[0] =~ $re; 
+			if ($untaint_this && defined $-[0]) {
+				return (substr($_[0], $-[0], $+[0] - $-[0]) =~ m/(.*)/s)[0];
+			}
+			else {
+				return $match;
+			}
+		};
+
 	}
 	else {
-		$sub = eval 'sub { $_[0] =~ '.$re. '}';
-		die "Error compiling regular expression $re: $@" if $@;
+		$sub = eval 'sub { $_[0] =~ '.$re.$return_code. '}';
 	}
+	die "Error compiling regular expression $re: $@" if $@;
 	return $sub;
 }
 
@@ -796,17 +847,8 @@ sub _constraint_hash_build {
 
 	# Check for regexp constraint
 	if ((ref $c->{constraint} eq 'Regexp')
-		or ( $c->{constraint} =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ )) {
-		#If untainting return the match otherwise return result of match
-               my $return_code = ($untaint_this) ? 'return (substr($_[0], $-[0], $+[0] - $-[0]) =~ m/(.*)/s)[0] if defined($-[0]);' : '';
-		
-		   if (ref $c->{constraint} eq 'Regexp') {
-			   $c->{constraint} = sub { $_[0] =~ $c->{constraint}; eval($return_code) };
-		   }
-		   else {
-			   $c->{constraint} = eval 'sub { $_[0] =~ '. $c->{constraint} . ';' . $return_code . '}';
-		   }
-		die "Error compiling regular expression $c->{constraint}: $@" if $@;
+			or ( $c->{constraint} =~ m@^\s*(/.+/|m(.).+\2)[cgimosx]*\s*$@ )) {
+		$c->{constraint} = _create_sub_from_RE($c->{constraint},$untaint_this);
 	}
 	# check for code ref
 	elsif (ref $c->{constraint} eq 'CODE') {
@@ -815,11 +857,25 @@ sub _constraint_hash_build {
 	else {
 		# provide a default name for the constraint if we don't have one already
 		$c->{name} ||= $c->{constraint};
+
+		# Save the current constraint name for later
+		$self->{__CURRENT_CONSTRAINT_NAME} = $c->{name};
 		
 		#If untaint is turned on call match_* sub directly. 
 		if ($untaint_this) {
-			$c->{constraint} = *{qualify_to_ref("match_$c->{constraint}")}{CODE} ||
-				die "No untainting constraint found named '$c->constraint'";
+			my $routine = 'match_'.$c->{constraint};			
+			my $match_sub = *{qualify_to_ref($routine)}{CODE};
+			if ($match_sub) {
+				$c->{constraint} = $match_sub; 
+			}
+			# If the constraint name starts with RE_, try looking for it in the Regexp::Common package
+			elsif ($c->{constraint} =~ m/^RE_/) {
+				$c->{is_method} = 1;
+				$c->{constraint} = eval 'sub { &_create_regexp_common_constraint(@_)}' 
+					|| die "could not create Regexp::Common constraint: $@";
+			} else {
+				die "No untainting constraint found named $c->{constraint}";
+			}
 		}
 		else {
 			# try to use match_* first
@@ -831,6 +887,12 @@ sub _constraint_hash_build {
 			# validator_package(s) there may be only valid_* defined
 			elsif (my $valid_sub = *{qualify_to_ref('valid_'.$c->{constraint})}{CODE}) {
 				$c->{constraint} = $valid_sub;
+			}
+			# Load it from Regexp::Common 
+			elsif ($c->{constraint} =~ m/^RE_/) {
+				$c->{is_method} = 1;
+				$c->{constraint} = eval 'sub { return defined &_create_regexp_common_constraint(@_)}' ||
+					die "could not create Regexp::Common constraint: $@";
 			}
 			else {
 				die "No constraint found named '$c->{name}'";
@@ -899,6 +961,20 @@ sub _get_data {
 	else {
 		return %$data;	
 	}
+}
+
+
+sub _create_regexp_common_constraint  {
+	require Regexp::Common;
+	import  Regexp::Common 'RE_ALL';
+	my $self = shift;
+	my $re_name = $self->get_current_constraint_name;
+	# deference all input
+	my @params = map {$_ = $$_ if ref $_ }  @_;
+
+	no strict "refs";
+	my $re = &$re_name(-keep=>1,@params) || die 'no matching Regexp::Common routine found';
+	return ($self->get_current_constraint_value =~ $re) ? $1 : undef; 
 }
 
 

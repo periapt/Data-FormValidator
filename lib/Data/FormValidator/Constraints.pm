@@ -112,37 +112,7 @@ In an Data::FormValidator profile:
 =head1 DESCRIPTION
 
 Those are the builtin constraints that can be specified by name in the input
-profiles. You may also call these functions directly through the procedural
-interface by either importing them directly or importing the whole
-I<:validators> group. For example, if you want to access the I<email> validator
-directly, you could either do:
-
-    use Data::FormValidator::Constraints (qw/valid_email/);
-    or
-    use Data::FormValidator::Constraints (:validators);
-
-    if (valid_email($email)) {
-      # do something with the email address
-    }
-
-Notice that when you call validators directly, you'll need to prefix the
-validator name with "valid_" 
-
-Each validator also has a version that returns the untainted value if
-the validation succeeded. You may call these functions directly
-through the procedural interface by either importing them directly or
-importing the I<:matchers> group. For example if you want to untaint a
-value with the I<email> validator directly you may:
-
-    if ($email = match_email($email)) {
-        system("echo $email");
-    }
-    else {
-        die "Unable to validate email";
-    }
-
-Notice that when you call validators directly and want them to return an
-untainted value, you'll need to prefix the validator name with "match_" 
+profiles. 
 
 =cut
 
@@ -151,7 +121,7 @@ sub AUTOLOAD {
 
     # Since all the valid_* routines are essentially identical we're
     # going to generate them dynamically from match_ routines with the same names.
-    if ($name =~ m/^(.*::)valid_(.*)/) {
+	if ($name =~ m/^(.*::)valid_(.*)/) {
 		no strict qw/refs/;
 		return defined &{$1.'match_' . $2}(@_);
     }
@@ -476,10 +446,78 @@ __END__
 
 =pod
 
+=head1 REGEXP::COMMON SUPPORT
+
+Data::FormValidator also includes built-in support for using any of regular expressions
+in L<Regexp::Common> as named constraints. Simply use the name of regular expression you want.
+This works whether you want to untaint the data or not. For example:
+
+ constraints => {
+	my_ip_address => 'RE_net_IPv4',
+ }
+
+Some Regexp::Common regular expressions support additional flags that are
+expected to be passed into the routine as arguments. We support this as well.
+Just use hash style method of declaring a constraint, and the C<params> key:
+
+ constraints => {
+	my_ip_address => {
+		constraint => 'RE_net_IPv4',
+		params => [ \'-sep'=> \' ' ],
+	}
+ }
+
+Yes, it's a bit strange that you have pass the values to param by reference using
+the backslash ("\"). This is necessary to preserve some important backward compatibility
+that I haven't figured out how to work around yet. 
+
+Be sure to check out the L<Regexp::Common> syntax for how its syntax works. It will make
+more sense to add future regular expressions to Regexp::Common rather than to
+Data::FormValidator.
+
+=head1 PROCEDURAL INTERFACE
+
+You may also call these functions directly through the procedural
+interface by either importing them directly or importing the whole
+I<:validators> group. This is useful if you want to use the built-in validators
+out of the usual profile specification interface. 
+
+
+For example, if you want to access the I<email> validator
+directly, you could either do:
+
+    use Data::FormValidator::Constraints (qw/valid_email/);
+    or
+    use Data::FormValidator::Constraints (:validators);
+
+    if (valid_email($email)) {
+      # do something with the email address
+    }
+
+Notice that when you call validators directly, you'll need to prefix the
+validator name with "valid_" 
+
+Each validator also has a version that returns the untainted value if
+the validation succeeded. You may call these functions directly
+through the procedural interface by either importing them directly or
+importing the I<:matchers> group. For example if you want to untaint a
+value with the I<email> validator directly you may:
+
+    if ($email = match_email($email)) {
+        system("echo $email");
+    }
+    else {
+        die "Unable to validate email";
+    }
+
+Notice that when you call validators directly and want them to return an
+untainted value, you'll need to prefix the validator name with "match_" 
+
 =head1 SEE ALSO
 
-Data::FormValidator(3) Data::FormValidator::Filters(3)
-Data::FormValidator::ConstraintsFactory(3)
+Data::FormValidator(3), Data::FormValidator::Filters(3),
+Data::FormValidator::ConstraintsFactory(3),
+L<Regexp::Common>
 
 =head1 CREDITS
 

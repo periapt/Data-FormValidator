@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '3.01';
+$VERSION = '3.1';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -539,11 +539,15 @@ The keys in this hash are field names. The values can any of the following:
 
 =item o
 
-the name of a builtin constraint function (see below)
+A named constraint. 
 
 B<Example>: 
 
  my_zipcode_field 	=> 'zip',
+
+See L<Data::FormValidator::Constraints> for the details of which
+built-in constraints that are available.
+
 
 =item o 
 

@@ -17,11 +17,12 @@ $class->new(
 	module_name => 'Data::FormValidator',
 	license => 'perl',
 	requires => {
-		'Image::Size' => 0,
-		'Test::More'  => 0,
-		'Date::Calc'	=> 0,
-		'File::MMagic' => 1.17,
-		'MIME::Types'	=> 1.005,
+		'Image::Size' 	 => 0,
+		'Test::More'  	 => 0,
+		'Date::Calc'	 => 0,
+		'File::MMagic'   => 1.17,
+		'MIME::Types'	 => 1.005,
+		'Regexp::Common' => 0 
 	},
 )->create_build_script;
 

@@ -25,7 +25,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 	match_date_and_time
 );
 
-$VERSION = '0.01';
+$VERSION = '0.02';
 
 # XXX TODO: find a way to make standard formats available.
 # For example, having a format that you know Postgres will accept as a valid
@@ -144,7 +144,7 @@ Internally L<Date::Calc> is used to test the functions.
 
 =head1 SEE ALSO
 
-L<Data::FormValidator>,
+L<Data::FormValidator>, L<DateTime::Format::Pg>, L<DateTime::Format::MySQL>, L<DateTime::Format::Mail>
 
 =head1 AUTHOR
 

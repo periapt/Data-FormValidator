@@ -314,11 +314,14 @@ INPUT PROFILE SPECIFICATION
     The keys in this hash are field names. The values can any of the
     following:
 
-    o   the name of a builtin constraint function (see below)
+    o   A named constraint.
 
         Example:
 
          my_zipcode_field       => 'zip',
+
+        See Data::FormValidator::Constraints for the details of which
+        built-in constraints that are available.
 
     o   a perl regular expression
 

@@ -1,3 +1,14 @@
+3.10 Mon May 26 2003 
+	- New Feature: Any regular expression from Regexp::Common can now be used
+	  directly as a named constraint. See Data::FormValidator::Constraints
+	  documentation for an example syntax. 
+
+	- Bug Fix: fixed imported_validators error that could occur if the same
+	  profile was used more than once with the same DFV object.
+
+	- improved support and testing of 'qr' a bit.
+
+
 3.01 Thu May 15 2003
 	This release fixes addresses a couple of issues related to the new support
 	for error message handling through msgs() and "qr" support. If you aren't

@@ -42,6 +42,7 @@ t/25_results.t
 t/26_qr.t
 t/27_qualify_ref_happy_death.t
 t/28_defaults_for_new.t
+t/29_regexp_common.t
 t/99_pod.t
 t/ValidatorPackagesTest1.pm
 t/ValidatorPackagesTest2.pm
