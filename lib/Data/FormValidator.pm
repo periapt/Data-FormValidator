@@ -25,7 +25,7 @@ package Data::FormValidator;
 use vars qw( $VERSION );
 
 BEGIN {
-    ($VERSION) = '$Revision: 1.4 $' =~ /Revision: ([\d.]+)/;
+    ($VERSION) = '$Revision: 1.5.1 $' =~ /Revision: ([\d.]+)/;
 }
 
 require Exporter;
