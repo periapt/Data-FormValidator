@@ -4,7 +4,7 @@ use lib ('.','../t','t/');
 
 $^W = 1;
 
-print "1..5\n";
+print "1..6\n";
 
 use Data::FormValidator;
 
@@ -72,5 +72,17 @@ print "ok 4\n";
 
 print "not " unless (defined $valids->{required_2});
 print "ok 5\n";
+
+# Now test calling 'validate' as a class method
+use Data::FormValidator;
+
+eval {
+my ($valid,$missing,$invalid) = Data::FormValidator->validate($input_hashref,{
+        required=>[qw/required_1/],
+        validator_packages=> 'Data::FormValidator',
+    });
+};
+print "not " if $@;
+print "ok 6\n";
 
 

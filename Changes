@@ -1,5 +1,11 @@
 Revision history for Perl extension Data::FormValidator.
 
+2.04 Fri Apr 11 2003
+	- Bug Fix: multiple parameters passed to a constraint
+	were not being handled appropriately in some cases. (Markus)
+	- Bug Fix: Calling "validate" as a class method in combination
+	with using "validator_packages no longer causes a problem.
+
 2.03 Thu Apr 10 2003
      - Bug Fix: use of "delete" syntax with multiple values updated
 	 	to be backwards compatible with Perl 5.005 (Jonathan Buhacoff) 

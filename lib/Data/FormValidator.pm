@@ -9,7 +9,7 @@
 #    Copyright (C) 1999 Francis J. Lacoste, iNsu Innovations
 #    Parts Copyright 1996-1999 by Michael J. Heins <mike@heins.net>
 #    Parts Copyright 1996-1999 by Bruce Albrecht  <bruce.albrecht@seag.fingerhut.com>
-#    Parts Copyright 2001-2002 by Mark Stosberg <mark@stosberg.com>
+#    Parts Copyright 2001-2003 by Mark Stosberg <mark@stosberg.com>
 #
 #    Parts of this module are based on work by
 #    Bruce Albrecht, <bruce.albrecht@seag.fingerhut.com> contributed to
@@ -25,7 +25,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION $AUTOLOAD);
 
-$VERSION = '2.03';
+$VERSION = '2.04';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -456,12 +456,11 @@ value "postcode".
 
 =item untaint_all_constraints
 
-If this field is set all form data that passes a constraint will be
-untainted. The untainted data will be returned in the valid
-hash. Untainting is based on the pattern match used by the
-constraint. If you write your own regular expressions and only match
-part of the string then you'll only get part of the string in the
-valid hash. It is a good idea to write you own constraints like
+If this field is set all form data that passes a constraint will be untainted.
+The untainted data will be returned in the valid hash. Untainting is based on
+the pattern match used by the constraint. If you write your own regular
+expressions and only match part of the string then you'll only get part of the
+string in the valid hash. It is a good idea to write you own constraints like
 /^regex$/. That way you match the whole string.
 
 This is overridden by untaint_constraint_fields
@@ -469,29 +468,29 @@ This is overridden by untaint_constraint_fields
 =item untaint_constraint_fields
 
 Specifies that one or more fields will be untainted if they pass their
-constraint(s). This can be set to a single field name or an array
-reference of field names. The untainted data will be returned in the
-valid hash. Untainting is based on the pattern match used by the
-constraint. If you write your own regular expressions and only match
-part of the string then you'll only get part of the string in the
-valid hash. It is a good idea to write you own constraints like
-/^regex$/. That way you match the whole string.
+constraint(s). This can be set to a single field name or an array reference of
+field names. The untainted data will be returned in the valid hash. Untainting
+is based on the pattern match used by the constraint. If you write your own
+regular expressions and only match part of the string then you'll only get part
+of the string in the valid hash. It is a good idea to write you own constraints
+like /^regex$/. That way you match the whole string.
 
 This is overrides the untaint_all_constraints flag.
 
 =item missing_optional_valid
 
-This can be set to a true value (such as 1) to cause missing optional
-fields to be included in the valid hash. By default they are not
-included-- this is the historical behavior. 
+This can be set to a true value (such as 1) to cause missing optional fields to
+be included in the valid hash. By default they are not included-- this is the
+historical behavior. 
 
 =item validator_packages 
 
-This key is used to define other packages which contain validation routines. 
+This key is used to define other packages which contain validation routines.
 Set this key to a single package name, or an arrayref of several. All of its
-subs beginning with 'match_' and 'valid_' will be imported into Data::FormValidator.
-This lets you reference them in a constraint with just their name (the part
-after the underscore).  You can even override the provided validators.
+subs beginning with 'match_' and 'valid_' will be imported into
+Data::FormValidator.  This lets you reference them in a constraint with just
+their name (the part after the underscore).  You can even override the provided
+validators.
 
 B<Example>:
 
@@ -501,15 +500,15 @@ B<Example>:
 
 =head1 VALIDATING INPUT BASED ON MULTIPLE FIELDS
 
-You can pass more than one value into a validation routine. 
-For that, the value of the constraint should be a 
-a hash reference. One key should named C<constraint> and should have a value 
-set to the reference of the subroutine or the name of a built-in validator.
-Another required key is I<params>. The value of the I<params> key is a
-reference to an array of the other elements to use in the validation. If the
-element is a scalar, it is assumed to a field name. If the value is a reference,
-what the reference points to is passed into the subroutine. 
-(Don't forget to include the name of the field to check in that list!)
+You can pass more than one value into a validation routine.  For that, the
+value of the constraint should be a hash reference. One key should named
+C<constraint> and should have a value set to the reference of the subroutine or
+the name of a built-in validator.  Another required key is I<params>. The value
+of the I<params> key is a reference to an array of the other elements to use in
+the validation. If the element is a scalar, it is assumed to a field name. If
+the value is a reference, what the reference points to is passed into the
+subroutine.  (Don't forget to include the name of the field to check in that
+list!)
 
 B<Example>:
 
@@ -521,9 +520,9 @@ B<Example>:
 
 =head1 MULTIPLE CONSTRAINTS
 
-Multiple constraints can be applied to a single field by defining
-the value of the constraint to be an array reference. Each of the values in this array
-can be one of the constraint types defined above: the name of a built-in validator, 
+Multiple constraints can be applied to a single field by defining the value of
+the constraint to be an array reference. Each of the values in this array can
+be one of the constraint types defined above: the name of a built-in validator,
 a regular expression, or a subroutine reference. 
 
 It's important to know which of the constraints failed, so fields defined
@@ -654,7 +653,7 @@ sub validate {
 
     # import valid_* subs from requested packages
 	foreach my $package (_arrayify($profile->{validator_packages})) {
-		if ( !exists $self->{imported_validators}{$package} ) {
+		if ( !exists $profile->{imported_validators}{$package} ) {
 			eval "require $package";
 			if ($@) {
 				die "Couldn't load validator package '$package': $@";
@@ -668,7 +667,7 @@ sub validate {
 					*{qualify_to_ref($sub)} = $subref;
 				}
 			}
-			$self->{imported_validators}{$package} = 1;
+			$profile->{imported_validators}{$package} = 1;
 		}
 	}
 
@@ -868,10 +867,10 @@ sub validate {
 	   foreach my $constraint_spec (_arrayify($constraint_list)) {
 			 my $c = _constraint_hash_build($field,$constraint_spec,$untaint_this);
 
-			 my $is_value_list = 1 if ref $valid{$field};
+			 my $is_value_list = 1 if (ref $valid{$field} eq 'ARRAY');
 			 if ($is_value_list) {
 				 foreach (my $i = 0; $i < scalar @{ $valid{$field}} ; $i++) {
-					 my @params = _constraint_input_build($c,$valid{$field}->[$i]);
+					 my @params = _constraint_input_build($c,$valid{$field}->[$i],\%valid);
 
 					 my ($match,$failed) = _constraint_check_match($c,\@params);
 					 if ($failed) {
@@ -883,7 +882,7 @@ sub validate {
 				 }
 			 }
 			 else {
-				my @params = _constraint_input_build($c,$valid{$field});
+				my @params = _constraint_input_build($c,$valid{$field},\%valid);
 				my ($match,$failed) = _constraint_check_match($c,\@params);
 				if ($failed) {
 					push @invalid_list, $failed
@@ -1683,14 +1682,14 @@ sub _constraint_hash_build {
 }
 
 sub _constraint_input_build {
-	my ($c,$value) = @_;
-	die "_constraint_input_build recieved wrong number of arguments" unless (scalar @_ == 2);
+	my ($c,$value,$valid) = @_;
+	die "_constraint_input_build recieved wrong number of arguments" unless (scalar @_ == 3);
 
 	my @params;
 	if (defined $c->{params}) {
 		foreach my $fname (_arrayify($c->{params})) {
 			# If the value is passed by reference, we treat it literally
-			push @params, (ref $fname) ? $fname : $value 
+			push @params, (ref $fname) ? $fname : $valid->{$fname}
 		}
 	}
 	else {
