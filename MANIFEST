@@ -13,3 +13,4 @@ t/5_valid_ip_address.t
 t/6_regexp_map.t
 t/7_missing_optional.t
 t/8_profile_checking.t
+t/9_require_some.t

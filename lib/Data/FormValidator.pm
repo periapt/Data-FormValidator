@@ -25,7 +25,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION );
 
-$VERSION = '1.11';
+$VERSION = '1.91';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -195,6 +195,12 @@ Here is an example of a valid input profiles specification :
 		[ qw( fullname phone email address) ],
             required_regexp => '/city|state|zipcode/',
             optional_regexp => '/_province$/',
+
+		require_some => {
+			# require any two fields from this group
+			city_or_state_or_zipcode [ 2, qw/city state zipcode/ ], 
+		},
+			
 	    constraints  =>
 		{
 		    email	=> "email",
@@ -257,18 +263,30 @@ This is an array reference which contains the name of the fields which
 are required. Any fields in this list which are not present in the
 user input will be reported as missing.
 
+=item required_regexp
+
+This is a regular expression used to specify additional fieds which are
+required. For example, if you wanted all fields names that begin with I<user_> 
+to be required, you could use the regular expression, /^user_/
+
+=item require_some
+
+This is a reference to a hash which defines groups of fields where 
+1 or more field from the group should be required, but exactly
+which fields doesn't matter. The keys in the hash are the group names. 
+These are returned as "missing" unless the required number of fields
+from the group has been filled in. The values in this hash are
+array references. The first element in this hash should be the 
+number of fields in the group that is required. If the first
+first field in the array is not an a digit, a default of "1" 
+will be used. 
+
 =item optional
 
 This is an array reference which contains the name of optional fields.
 These are fields which MAY be present and if they are, they will be
 check for valid input. Any fields not in optional or required list
 will be reported as unknown.
-
-=item required_regexp
-
-This is a regular expression used to specify additional fieds which are
-required. For example, if you wanted all fields names that begin with I<user_> 
-to be required, you could use the regular expression, /^user_/
 
 =item optional_regexp
 
@@ -522,6 +540,15 @@ sub validate {
 		  $optional{$k} =  1;
        }
     }
+
+	# handle "require_some"
+	my %require_some;
+ 	while ( my ( $field, $deps) = each %{$profile->{require_some}} ) {
+        foreach my $dep (_arrayify($deps)){
+             $require_some{$dep} = 1;
+        }
+    }
+
 	
 	# Remove all empty fields
 	foreach my $field ( keys %valid ) {
@@ -562,7 +589,7 @@ sub validate {
 
     # Find unknown
     @unknown =
-      grep { not (exists $optional{$_} or exists $required{$_} ) } keys %valid;
+      grep { not (exists $optional{$_} or exists $required{$_} or exists $require_some{$_} ) } keys %valid;
     # and remove them from the list
     foreach my $field ( @unknown ) {
 	delete $valid{$field};
@@ -575,8 +602,20 @@ sub validate {
 
     # Check for required fields
     foreach my $field ( keys %required ) {
-	push @missings, $field unless exists $valid{$field};
+		push @missings, $field unless exists $valid{$field};
     }
+
+	# Check for the absence of require_some fields
+	while ( my ( $field, $deps) = each %{$profile->{require_some}} ) {
+		my $enough_required_fields = 0;
+		my @deps = _arrayify($deps);
+		# num fields to require is first element in array if looks like a digit, 1 otherwise. 
+		my $num_fields_to_require = ($deps[0] =~ m/^\d+$/) ? $deps[0] : 1;
+		foreach my $dep (@deps){
+			$enough_required_fields++ if exists $valid{$dep};
+		}
+		push @missings, $field unless ($enough_required_fields >= $num_fields_to_require);
+	}
 
     # add in the constraints from the regexp map 
     foreach my $re (keys %{ $profile->{constraint_regexp_map} }) {
@@ -1227,6 +1266,7 @@ sub _check_profile_syntax {
 		optional
 		required
 		required_regexp 
+		require_some
 		optional_regexp
 		constraints
 		constraint_regexp_map
