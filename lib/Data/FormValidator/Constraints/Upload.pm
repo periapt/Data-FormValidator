@@ -20,7 +20,7 @@ use vars qw($VERSION @ISA @EXPORT);
 	valid_file_max_bytes	
 );
 
-$VERSION = '0.62';
+$VERSION = '0.71';
 
 sub valid_file_format {
 	my $self = shift;
@@ -69,7 +69,7 @@ sub valid_file_format {
    use MIME::Types;
    my $mimetypes = MIME::Types->new;
    my MIME::Type $t = $mimetypes->type($mt);
-   my @mt_exts = $t->extensions;
+   my @mt_exts = $t ? $t->extensions : ();
 
    my ($uploaded_ext) = ($img =~ m/\.([\w\d]*)?$/);
 
@@ -152,7 +152,13 @@ sub valid_file_max_bytes {
 			Check that you used 'constraint_method' and not 'constraint'";
 	my $max_bytes_ref = shift;
 	
-	my $max_bytes = $max_bytes_ref || 1024*1024; # default to 1 Meg
+	my $max_bytes;
+	if ((ref $max_bytes_ref) and defined $$max_bytes_ref) {
+		$max_bytes = $$max_bytes_ref;
+	}
+	else {
+		$max_bytes = 1024*1024; # default to 1 Meg
+	}
 
 	my $q = $self->get_input_data;
     require UNIVERSAL;
