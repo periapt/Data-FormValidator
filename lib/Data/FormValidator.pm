@@ -4,11 +4,12 @@
 #    This file is part of Data::FormValidator.
 #
 #    Author: Francis J. Lacoste <francis.lacoste@iNsu.COM>
+#    Maintainer: Mark Stosberg <mark@stosberg.com>
 #
 #    Copyright (C) 1999 Francis J. Lacoste, iNsu Innovations
 #    Parts Copyright 1996-1999 by Michael J. Heins <mike@heins.net>
 #    Parts Copyright 1996-1999 by Bruce Albrecht  <bruce.albrecht@seag.fingerhut.com>
-#    Parts Copyright 2001      by Mark Stosberg <mark@stosberg.com>
+#    Parts Copyright 2001-2002 by Mark Stosberg <mark@stosberg.com>
 #
 #    Parts of this module are based on work by
 #    Bruce Albrecht, <bruce.albrecht@seag.fingerhut.com> contributed to
@@ -24,7 +25,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION );
 
-$VERSION = 1.7;
+$VERSION = 1.8;
 
 
 require Exporter;
@@ -336,6 +337,12 @@ you could check to see that all fields that end in "_postcode" are
 valid Canadian postal codes by using the key '_postcode$' and the
 value "postcode".
 
+=item missing_optional_valid
+
+This can be set to a true value (such as 1) to cause missing optional
+fields to be included in the valid hash. By default they are not
+included-- this is the historical behavior. 
+
 =back
 
 =cut
@@ -479,9 +486,11 @@ sub validate {
        }
     }
 
-    # Remove all empty fields
+    # Remove all empty fields, unless missing_optional_valid is true and the field is optional 
     foreach my $field ( keys %valid ) {
-	delete $valid{$field} unless length $valid{$field};
+		 unless ($profile->{missing_optional_valid} and $optional{$field}) {
+			 delete $valid{$field} unless length $valid{$field};
+		 }
     }
 
     # Check if the presence of some fields makes other optional
@@ -1173,6 +1182,11 @@ __END__
 =pod
 
 =back
+
+=head1 SEE ALSO
+
+L<Data::FormValidator::Tutorial>, perl(1)
+
 
 =head1 CREDITS
 

@@ -1,13 +1,18 @@
 Revision history for Perl extension Data::FormValidator.
 
+1.8   Thu Feb 14 2002
+	- Added link to Data::FormValidator::Tutorial in SEE ALSO section
+	- Added "missing_optional_valid" flag to profiles to allow missing
+	  optional fields to be considered valid
+
 1.7   Sat Nov 03 2001
-        - Fixed broken constraint_regexp_map implementation. If you
-          followed the example syntax in the documentation your regular
-          expression could have failed to match when it should have
-          succeeded. This feature now works as advertised in the
-          documentation. 
-        - Updated documentation to reflect new mailing list and public
-          CVS server.
+    - Fixed broken constraint_regexp_map implementation. If you
+	  followed the example syntax in the documentation your regular
+	  expression could have failed to match when it should have
+	  succeeded. This feature now works as advertised in the
+	  documentation. 
+    - Updated documentation to reflect new mailing list and public
+      CVS server.
 
 1.6   Sun Sep 23 2001
 	- Fixed bug with undefined lists by using empty lists instead (Ronald Kimball)

@@ -11,3 +11,4 @@ t/3_dependency.t
 t/4_arrayify_undef.t
 t/5_valid_ip_address.t
 t/6_regexp_map.t
+t/7_missing_optional.t
