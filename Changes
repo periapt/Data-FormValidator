@@ -1,5 +1,11 @@
 Revision history for Perl extension Data::FormValidator.
 
+1.11 Sat Jun 29 2002 
+	- Fixed small bug where constraint arrays were tested with truth rather than length. (Maurice Aubrey) 
+	- Fixed documentation bug for american_phone validation (Dan Puro)
+	- Added documentation for simplified syntax using a class method  
+	- Added profile syntax checking to help catch misspelled keys faster
+
 1.10 Sun Apr 21 2002
 	- Added code for field_filter_regexp_map (Tim Noll)
 

@@ -8,15 +8,15 @@ print "1..6\n";
 use Data::FormValidator;
 
 my $input_profile = {
-		required => [qw(bar)],
-		optional => [qw(foo)],
-               dependencies => {
-                    cc_type => {
-                        Check   => [qw( cc_num )],
-                        Visa => [qw( cc_num cc_exp cc_name )],
-                    },
-               },
-	};
+	required => [qw(bar)],
+	optional => [qw(foo)],
+	dependencies => {
+		cc_type => {
+			Check   => [qw( cc_num )],
+			Visa => [qw( cc_num cc_exp cc_name )],
+		},
+	},
+};
 
 my $validator = new Data::FormValidator({default => $input_profile});
 

@@ -25,8 +25,7 @@ package Data::FormValidator;
 
 use vars qw( $VERSION );
 
-$VERSION = '1.10';
-
+$VERSION = '1.11';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -111,10 +110,14 @@ on input profile.
 
 =head1 SYNOPSIS
 
-In an HTML::Empberl page:
-
     use Data::FormValidator;
 
+	# For the common case of a validating a single profile provided through a hash reference,
+	# using 'validate' like this is the simplest solution 
+	my ($valids, $missings, $invalids, $unknowns) 
+		= Data::FormValidator->validate(\%fdat, \%profile);
+
+    # This is an example of using a validation profile defined in a seperate file
     my $validator = new Data::FormValidator( "/home/user/input_profiles.pl" );
     my ( $valid, $missing, $invalid, $unknown ) = $validator->validate(  \%fdat, "customer_infos" );
 
@@ -158,7 +161,8 @@ sub new {
 	$profile_file	= undef;
     }
 
-    bless { profile_file => $profile_file,
+    bless { 
+		profile_file => $profile_file,
 	    profiles	 => $profiles,
 	  }, $class;
 }
@@ -439,14 +443,16 @@ sub validate {
     my ( $self, $data, $name ) = @_;
 
     my $profile;
-    if ( ref $name ) {
-	$profile = $name;
-    } else {
-	$self->load_profiles;
-	$profile = $self->{profiles}{$name};
-	die "No such profile $name\n" unless $profile;
-    }
-    die "Invalid input profile\n" unless ref $profile eq "HASH";
+	if ( ref $name ) {
+		$profile = $name;
+	} else {
+		$self->load_profiles;
+		$profile = $self->{profiles}{$name};
+		die "No such profile $name\n" unless $profile;
+	}
+
+	# check the profile syntax or die with an error. 
+	_check_profile_syntax($profile);
 
     # Copy data and assumes that all is valid
     my %valid	    = %$data;
@@ -522,8 +528,7 @@ sub validate {
 		delete $valid{$field} unless length $valid{$field};
 	}
 
-    # Check if the presence of some fields makes other optional
-    # fields required.
+    # Check if the presence of some fields makes other optional fields required.
     while ( my ( $field, $deps) = each %{$profile->{dependencies}} ) {
         if ($valid{$field}) {
             if (ref($deps) eq 'HASH') {
@@ -641,7 +646,7 @@ sub _arrayify {
 
    if ( ref $val eq 'ARRAY' ) {
 		# if it's a reference, return an array unless it points an empty array. -mls
-                return $val->[0] ? @$val : ();
+                return (length $val->[0]) ? @$val : ();
    } 
    else {
 		# if it's a string, return an array unless the string is missing or empty. -mls
@@ -1086,7 +1091,7 @@ sub valid_phone {
 =item american_phone
 
 This constraints checks if the number is a possible North American style
-of phone number : (XXX) XXX-XXXX. It has to contains more than 7 digits.
+of phone number : (XXX) XXX-XXXX. It has to contains 7 or more digits.
 
 =cut
 
@@ -1210,6 +1215,35 @@ sub valid_ip_address {
      return 
        (($1 >= 0 && $1 <= 255) && ($2 >= 0 && $2 <= 255) && ($3 >= 0 && $3 <= 255) && ($4 >= 0 && $4 <= 255))
    }
+}
+
+# check the profile syntax and die if we have an error
+sub _check_profile_syntax {
+	my $profile = shift;
+
+	die "Invalid input profile: needs to be a hash reference\n" unless ref $profile eq "HASH";
+
+	my @valid_profile_keys = (qw/
+		optional
+		required
+		required_regexp 
+		optional_regexp
+		constraints
+		constraint_regexp_map
+		dependencies
+		dependency_groups
+		defaults
+		filters
+		field_filters
+		field_filter_regexp_map
+		missing_optional_valid /);
+
+	# If any of the keys in the profile are not listed as valid keys here, we die with an error	
+	for my $key (keys %$profile) {
+		unless (grep {$key eq $_} @valid_profile_keys) {
+			die "Invalid input profile: $key is not a valid profile key\n"
+		}
+	}
 }
 
 1;

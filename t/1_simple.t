@@ -23,7 +23,7 @@ my $input_hashref = {email => 'invalidemail',
 			likes => ['a','b'],
 			toppings => 'foo'};
 
-my ($valids, $missings, $invalids, $unknowns);
+my ($valids, $missings, $invalids, $unknowns) = ({},[],[],[]);
 
 eval{
   ($valids, $missings, $invalids, $unknowns) = $validator->validate($input_hashref, 'default');
