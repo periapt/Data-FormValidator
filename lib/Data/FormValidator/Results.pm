@@ -20,7 +20,7 @@ use Data::FormValidator::Filters qw/:filters/;
 use Data::FormValidator::Constraints (qw/:validators :matchers/);
 use vars qw/$AUTOLOAD $VERSION/;
 
-$VERSION = 3.56;
+$VERSION = 3.57;
 
 =pod
 
@@ -103,7 +103,8 @@ sub _process {
 			# Perl will die with a nice error message if the package can't be found
 			# No need to go through extra effort here. -mls :)
 			my $package_ref = qualify_to_ref("${package}::");
-			my @subs = grep(/^(valid_|match_)/, keys(%{*{$package_ref}}));
+			my @subs = grep(/^(valid_|match_|filter_)/,
+			                keys(%{*{$package_ref}}));
 			foreach my $sub (@subs) {
 				# is it a sub? (i.e. make sure it's not a scalar, hash, etc.)
 				my $subref = *{qualify_to_ref("${package}::$sub")}{CODE};
@@ -915,7 +916,7 @@ sub _get_data {
 		my %return;
 		# make sure object supports param()
 		defined($data->UNIVERSAL::can('param')) or
-		croak("Data::FormValidator->validate() or check() called with an object which lacks a param() method!");
+		die "Data::FormValidator->validate() or check() called with an object which lacks a param() method!";
 		foreach my $k ($data->param()){
 			# we expect param to return an array if there are multiple values
 			my @v = $data->param($k);
