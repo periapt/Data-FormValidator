@@ -446,6 +446,8 @@ __END__
 
 =pod
 
+=back
+
 =head1 REGEXP::COMMON SUPPORT
 
 Data::FormValidator also includes built-in support for using any of regular expressions

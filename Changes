@@ -1,3 +1,8 @@
+3.14
+    [BUG FIXES]
+    - fixed POD syntax issue in Constraints.pm that was causing a 'make test' 
+      failure with Test::Pod >.96
+
 3.13 Sun Nov 02 2003
     [THINGS THAT MAY BREAK YOUR CODE] 
     - How the Regexp::Common integration has changed. The old functionality was
