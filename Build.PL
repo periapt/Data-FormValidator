@@ -1,12 +1,27 @@
 shift(@ARGV) if $ARGV[0] eq 'Build'; # accomodate with CPAN autoinstall
 use Module::Build;
 
-Module::Build->new(
+my $class = Module::Build->subclass(
+	 class => 'Data::FormValidator::Builder',
+	 code => q{
+	 	sub ACTION_dist {
+			my $self = shift;
+			`perldoc -t Data::FormValidator>README`;
+			$self->SUPER::ACTION_dist;
+	 	}
+ 	},
+);
+
+
+$class->new(
 	module_name => 'Data::FormValidator',
 	license => 'perl',
 	requires => {
-		'Test'		  => 0,
+		'Image::Size' => 0,
 		'Test::More'  => 0,
+		'Date::Calc'	=> 0,
+		'File::MMagic' => 1.17,
+		'MIME::Types'	=> 1.005,
 	},
 )->create_build_script;
 

@@ -40,7 +40,8 @@ foreach my $function (keys(%tests)) {
     
     eval $is_valid;
     if ($@ or $rv != 1) {
-	print "not ";
+		warn $@;
+		print "not ";
     }
     print "ok $i\n";
     print sprintf("# %-25s", $function)

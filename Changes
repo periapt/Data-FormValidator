@@ -1,9 +1,81 @@
-Revision history for Perl extension Data::FormValidator.
+3.00 Sun May 11 2003
+	- New Feature: added debug option
+	- Make default msgs in "new" constructor work as it was supposed it 2.11_04
+	- Bug Fix: missing_optional_valid now works better when the input data comes
+		from a CGI.pm or Apache::Request object (David Ranney)
+	- Upload.pm syntax updated to no longer require Perl 5.6+ syntax
+	- New Feature: Upload.pm now first tries to use File::MMagic and MIME::Type 
+      to more intelligently determine the file type and an appropriate extension.
 
-2.10.1 Wed Apr 23 2003
-	- Bug Fix: fixed problem with Build.PL which prevented installation
-	  with CPAN autoinstall.Also removed SIGNATURE file which seemed to
-	  related to installation problems.  No code changes.
+2.11_04
+	- Major documentation overhaul. It should now be easier to browse and grok.
+
+	- New Feature: defaults can be passed to new() that will be used for all
+	  forms made from that object.
+
+	- New Feature: Added support for quoting regular expressions using "qr" 
+	  instead of defining them as strings. This is now the preferred method.
+	  Defining regular expressions as strings is deprecated but supported.
+
+	- New Feature: Friendly die statements when you have typos in filter 
+		and constraint names. (Instead of mysterious suicide). 
+
+	- Fixed syntax error in Upload.pm documentation
+	- Bug Fix: error checking in valid_file_format in Upload.pm
+	- Bug Fix: fixed bug related to returning constraint names introduced
+		in 2.11_03.
+
+2.11_03
+	- The code has now been reorganized, following the module of HTML::FormValidator.
+	  Filters, Constraints, and Results are now all handled in their own modules. 
+
+	- The "msgs" error functional has now been re-designed, and is not
+	  backwards compatible. Feedback on this experimental addition is encouraged.
+
+	- New Feature: Added ConstraintsFactory.pm module to distribution
+
+2.11_02
+	- New Feature: Support for Apache::Request objects
+	- New Feature: Now when constraint_regexp_map is used
+		and one or more constraints is already defined, the new
+		matching constraint is added to the list of constraints 
+		applied, rather than superceding the old one. 
+
+2.11_01 (A BETA release)
+
+	- New Feature: Added Data::FormValidator::Constraints::Upload
+		to the distribution.
+
+	- New Feature: Added Data::FormValidator::Constraints::Dates
+		to the distribution.
+
+	- The functionality of returning errors with the experimental 
+	  msgs feature has changed a bit. Now if you define multiple constraints,
+	  the messages will always be returned as an array reference, instead of
+	  when only there was more than one message. This should improve
+	  integration with HTML::Template.
+
+	- New Feature: When using multiple constraints defined as hash references,
+	  the "name" attribute will default to name of the constraint, if it is
+	  being called by name. 
+
+	- added documentation for writing your own validation routines.
+	- New Feature: Added 'valid' accessor/mutator method to manage
+	  and manipulate the result set. This can be useful to modify 
+	  the result set from within a constraint.
+
+	- New Feature: Added "constraint_method" as an alternative
+		to "constraint" in the hash-based constraint definition. 
+		Related to this, there are new accessor methods for use
+		inside of custom constraints:
+			get_input_data();
+			get_current_constraint_field();
+			get_current_constraint_value();
+
+		This whole arrangement brings support for multi-valued constraints with
+		constraint_regexp_map
+
+	- various documentation clean ups
 
 2.10 Sun Apr 20 2003
 	- New Feature: (EXPERIMENTAL) Added support for returning error messages

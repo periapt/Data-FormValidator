@@ -1,9 +1,7 @@
-
+use Test::More tests => 6;
 use strict;
 
 $^W = 1;
-
-print "1..3\n";
 
 use Data::FormValidator;
 
@@ -34,22 +32,34 @@ my ($valids, $missings, $invalids, $unknowns);
 eval{
   ($valids, $missings, $invalids, $unknowns) = $validator->validate($input_hashref, 'default');
 };
-#use Data::Dumper; warn Dumper   ($valids, $missings, $invalids, $unknowns);
-
-if($@){
-  print "not ";
-}
-print "ok 1\n";
+ok (not $@);
 
 # "not_filled" should appear valids now. 
-unless (exists $valids->{'not_filled'}){
-  print "not ";
-}
-print "ok 2\n";
+ok (exists $valids->{'not_filled'});
+
 
 # "should_be_unknown" should be still be unknown
-unless ($unknowns->[0] eq 'should_be_unknown') {
-	print "not ";
-}
-print "ok 3";
+ok($unknowns->[0] eq 'should_be_unknown');
+
+eval {
+	require CGI;
+};
+SKIP: {
+ skip 'CGI.pm not found', 3 if $@;
+
+ 	my $q = new CGI($input_hashref);
+	my ($valids, $missings, $invalids, $unknowns);
+	eval{
+	  ($valids, $missings, $invalids, $unknowns) = $validator->validate($q, 'default');
+	};
+
+	ok (not $@);
+
+	# "not_filled" should appear valids now. 
+	ok (exists $valids->{'not_filled'});
+
+	# "should_be_unknown" should be still be unknown
+	ok($unknowns->[0] eq 'should_be_unknown');
+
+};
 

@@ -1,4 +1,4 @@
-use Test::More tests => 15;
+use Test::More tests => 13;
 use strict;
 
 use Data::FormValidator;
@@ -22,7 +22,10 @@ my $prefix_profile = {
 	constraints => {
 		req_1 => 'email'
 	},
-	msgs=>{ prefix=>'' },
+	msgs=>{ 
+		prefix=>'',
+		any_errors=>'err__',
+	},
 };
 
 my $input_profile = {
@@ -39,6 +42,7 @@ my $input_profile = {
 						return 0;
 				       },
 					   sleep => [
+					   		'email',
 							{
 								name => 'min',
 								constraint => sub { 
@@ -88,16 +92,13 @@ my $input_profile = {
 						]
 				      },
 					  msgs => {
-						  invalid => {
-							  field => {
-								  admin => 'invalid email address',
-								  sleep => {
+					     missing => 'Test-Missing',		
+					     invalid => 'Test-Invalid',
+						 invalid_seperator=> ' ## ',
+
+						 constraints => {
 									  max => 'needs to be lesser than 11',
 									  min => 'needs to be greater than 0'
-								  },
-								  rounds => 'needs to be a number between 20 and 100'
-							  },
-							  default => 'contains an invalid value'
 						  },
 						  format => 'ERROR: %s', 
 						  prefix => 'error_',
@@ -112,42 +113,53 @@ my $validator = new Data::FormValidator({
 
 my $input_hashref = {admin=> 'invalidemail', prefork=> 9, sleep => 11, rounds=>8};
 
-my ($valids, $missings, $invalids, $unknowns) = ({},[],{},[]);
+my $results;
 eval{
-	($valids, $missings, $invalids, $unknowns) = $validator->validate($simple_data, 'simple');
+	$results  = $validator->check($simple_data, 'simple');
 };
 ok (not $@);
 
-# testing simple msg definition, both invalid and missing should be returned as hashes
-ok (ref $invalids eq 'HASH', 'invalid fields returned as hash in simple case'); 
-ok (ref $missings eq 'HASH', 'missing fields returned as hash in simple case'); 
+TODO: {
+	local $TODO= 'need to test for msgs() called before validate';
+	# msgs() should return emit a warning and return undef if the hash
+	# structure it points to is undefined. However, if it points to an
+	# empty hash, then maybe there are just no messages. 
+};
+
+# testing simple msg definition, $self->msgs should be returned as a hash ref
+my $msgs;
+eval {
+	$msgs = $results->msgs;
+};
+warn $@ unless ok ((not $@), 'existence of msgs method' );
 
 
-like ($invalids->{req_1}, qr/Invalid/, 'default invalid message');
-like ($missings->{req_2}, qr/Missing/, 'default missing message');
-like ($invalids->{req_1}, qr/span/,    'default formatting');
+ok (ref $msgs eq 'HASH', 'invalid fields returned as hash in simple case'); 
+
+
+like ($msgs->{req_1}, qr/Invalid/, 'default invalid message');
+like ($msgs->{req_2}, qr/Missing/, 'default missing message');
+like ($msgs->{req_1}, qr/span/,    'default formatting');
 
 
 # testing single constraints and single error case
 eval{
-	($valids, $missings, $invalids, $unknowns) = $validator->validate($input_hashref, 'default');
+	$results =  $validator->check($input_hashref, 'default');
 };
 ok (not $@);
+$msgs = $results->msgs;
 
-ok ($invalids->{error_sleep}->[0]->{constraint} eq 'max', 'multiple constraints constraint definition');
-ok (length $invalids->{error_sleep}->[0]->{msg}, 'multiple constraints msg definition');
-
-ok (length $invalids->{error_rounds}, 'multiple constraints with one message');	
-
-like($invalids->{error_rounds}, qr/ERROR/, 'overriding formatting'),
-
+like($msgs->{error_sleep} ,qr/lesser.*Test|Test.*lesser/, 'multiple constraints constraint definition');
 
 eval{
-	($valids, $missings, $invalids, $unknowns) = $validator->validate($simple_data, 'prefix');
+	$results = $validator->check($simple_data, 'prefix');
 };
 warn $@ unless ok (not $@);
+
+$msgs = $results->msgs({format => 'Control-Test: %s'});
 	
-ok(defined $invalids->{err_req_1}, 'using default prefix');
-ok(scalar keys %$invalids == 1, 'size of invalids hash');
-ok(scalar keys %$missings == 1, 'size of missings hash');
+ok(defined $msgs->{req_1}, 'using default prefix');
+ok(scalar keys %$msgs == 3, 'size of msgs hash'); # 2 errors plus 1 prefix 
+ok(defined $msgs->{err__}, 'any_errors');
+like($msgs->{req_1},qr/Control/,'passing controls to method');
 

@@ -60,7 +60,7 @@ print "ok 3\n";
 
 my %missings;
 @missings{@$missings} = ();
-print "@$missings\n";
+#print "@$missings\n";
 unless (exists $missings{'species'} && exists $missings{'no_legs'} && exists $missings{'petals'} && exists $missings{'stem'} && @$missings == 4) {
   print "not ";
 }

@@ -1,9 +1,7 @@
-
+use Test::More tests => 5;
 use strict;
 
 $^W = 1;
-
-print "1..5\n";
 
 use Data::FormValidator;
 
@@ -33,27 +31,42 @@ my ($valids, $missings, $invalids, $unknowns);
 eval{
   ($valids, $missings, $invalids, $unknowns) = $validator->validate($input_hashref, 'default');
 };
-if($@){
-  print "not ";
-}
-print "ok 1\n";
+ok (not $@);
+ok ($invalids->[0] eq 'email_1');
 
-unless ($invalids->[0] eq 'email_1'){
-  print "not ";
-}
-print "ok 2\n";
+ok ($valids->{'email_ok'}) ;
+ok ($valids->{'extra'});
+ok ($valids->{'first_name'} eq 'Mark' and $valids->{'last_name'} eq 'Stosberg');
 
-unless ($valids->{'email_ok'}) {
-   print "not ";
-}
-print "ok 3\n";
+# Tests below added 04/24/03 to test adding constraints to fields with existing constraints 
+my ($valids, $missings, $invalids, $unknowns);
+eval {
+	($valids,$missings,$invalids) = Data::FormValidator->validate(
+		# input
+		{
+			with_no_constraint	=> 'f1 text',	
+			with_one_constraint	=> 'f2 text',	
+			with_mult_constraint	=> 'f2 text',	
+		},
+		# profile
+		{
+			required=>[qw/with_no_constraint with_one_constraint with_mult_constraint/],
+			constraints=> {
+				with_one_constraint => 'email',
+				with_mult_constraint => ['email','american_phone'],
+			},
+			constraint_regexp_map => {
+			   '/^with/'	=> 'state',
+			},
+			msgs=>{},
+		}
+	)
+};
 
-unless ($valids->{'extra'}) {
-   print "not "; 
-}
-print "ok 4\n";
-
-unless ($valids->{'first_name'} eq 'Mark' and $valids->{'last_name'} eq 'Stosberg') {
-	print "not ";
-}
-print "ok 5\n";
+TODO: {
+	local $TODO = 'rewrite when message system is rebuilt';
+	#warn $@ unless ok (not $@);
+	#like($invalids->{with_no_constraint}, qr/Invalid/ ,   '...with no existing constraints');
+	#ok(scalar @{ $invalids->{with_one_constraint} } eq 2, '...with one existing constraint');
+	#ok(scalar @{ $invalids->{with_mult_constraint} } eq 3,'...with two existing constraints');
+};
