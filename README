@@ -50,44 +50,8 @@ VALIDATING INPUT
 
     The second argument is a reference to the profile you are validating.
 
-  validate()
-        my( $valids, $missings, $invalids, $unknowns ) = 
-            Data::FormValidator->validate( \%input_hash, \%dfv_profile);
-
-    "validate()" provides a deprecated alternative to "check()". It has the
-    same input syntax, but returns a four element array, described as
-    follows
-
-    valids
-        This is a hash reference to the valid fields which were submitted in
-        the data. The data may have been modified by the various filters
-        specified.
-
-    missings
-        This is a reference to an array which contains the name of the
-        missing fields. Those are the fields that the user forget to fill or
-        filled with spaces. These fields may comes from the *required* list
-        or the *dependencies* list.
-
-    invalids
-        This is a reference to an array which contains the name of the
-        fields which failed one or more of their constraint checks.
-
-        Fields defined with multiple constraints will have an array ref
-        returned in the @invalids array instead of a string. The first
-        element in this array is the name of the field, and the remaining
-        fields are the names of the failed constraints.
-
-    unknowns
-        This is a list of fields which are unknown to the profile. Whether
-        or not this indicates an error in the user input is application
-        dependant.
-
   new()
-    Using "new()" is only needed for advanced usage, so feel free to skip
-    this section if you are just getting started.
-
-    That said, using "new()" is useful in some cases. These include:
+    Using "new()" is only needed for advanced usage, including these cases:
 
     o   Loading more than one profile at a time. Then you can select the
         profile you want by name later with "check()". Here's an example:
@@ -118,9 +82,10 @@ VALIDATING INPUT
         parts of the validation profile that you might like to re-use for
         many form validations.
 
-        To facilite this, "new()" takes a second argument, a hash reference.
-        Here the usual input profile definitions can be made. These will act
-        as defaults for any subsequent calls to "check()" on this object.
+        To facilitate this, "new()" takes a second argument, a hash
+        reference. Here the usual input profile definitions can be made.
+        These will act as defaults for any subsequent calls to "check()" on
+        this object.
 
         Currently the logic for this is very simple. Any definition of a key
         in your validation profile will completely overwrite your default
@@ -163,6 +128,8 @@ INPUT PROFILE SPECIFICATION
     Here is a very simple input profile. Examples of more advanced options
     are described below.
 
+        use Data::FormValidator::Constraints qw(:all);
+
         my $profile = {
             optional => [qw( company
                              fax 
@@ -173,8 +140,8 @@ INPUT PROFILE SPECIFICATION
                              email 
                              address )],
 
-            constraints => {
-                email => 'email'
+            constraint_methods => {
+                email => email(), 
             }
         };
 
@@ -304,18 +271,21 @@ INPUT PROFILE SPECIFICATION
     applied to specific input fields. Used to apply filters to fields that
     match a regular expression.
 
-  constraints
-     constraints => {
-        cc_no      => {  
-            constraint  => "cc_number",
-            params        => [ qw( cc_no cc_type ) ],
-        },
-        cc_type    => "cc_type",
-        cc_exp    => "cc_exp",
+  constraint_methods
+     use Data::FormValidator::Constraints (qw:all);
+
+     constraint_methods => {
+        cc_no      => cc_number({fields => ['cc_type']}),
+        cc_type    => cc_type(),
+        cc_exp     => cc_exp(),
       },
 
     A hash ref which contains the constraints that will be used to check
     whether or not the field contains valid data.
+
+    Note: To use the built-in constraints, they need to first be loaded into
+    your name space using the syntax above. (Unless you are using the old
+    "constraints" key, documented in "BACKWARDS COMPATIBILITY").
 
     The keys in this hash are field names. The values can be any of the
     following:
@@ -329,7 +299,7 @@ INPUT PROFILE SPECIFICATION
         See Data::FormValidator::Constraints for the details of which
         built-in constraints that are available.
 
-    o   a perl regular expression
+    o   A perl regular expression
 
         Example:
 
@@ -345,56 +315,28 @@ INPUT PROFILE SPECIFICATION
     o   a subroutine reference, to supply custom code
 
         This will check the input and return true or false depending on the
-        input's validity. By default, the constraint function takes one
-        parameter, the field to be validated. To validate a field based more
+        input's validity. By default, the constraint function recieves a
+        Data::FormValidator::Results object as its first argument, and the
+        value to be validated as the second. To validate a field based more
         inputs than just the field itself, see "VALIDATING INPUT BASED ON
         MULTIPLE FIELDS".
 
         Examples:
 
-         my_zipcode_field => sub { my $val = shift;  return $val =~ '/^\d{5}$/' }, 
+         # Notice the use of 'pop'-- 
+         # the object is the first arg passed to the method
+         # while the value is the second, and last arg.
+         my_zipcode_field => sub { my $val = pop;  return $val =~ '/^\d{5}$/' }, 
  
          # OR you can reference a subroutine, which should work like the one above
          my_zipcode_field => \&my_validation_routine, 
 
-    o   a hash reference, to name a constraint or supply multiple
-        parameters.
-
-         # supply multiple parameters
-         cc_no  => {  
-             constraint  => "cc_number",
-             params         => [ qw( cc_no cc_type ) ],
-         },
-
-         # name a constraint, useful for returning error messages
-         last_name => {
-             name => "ends_in_name",
-             constraint => qr/_name$/,
-         },
-
-        Using a hash reference for a constraint permits the passing of
-        multiple arguments. Required arguments are "constraint" or
-        "constraint_method". Optional arguments are "name" and "params".
-
-        A "name" on a constraints 'glues' the constraint to its error
-        message in the validator profile (refer "msgs" section below). If no
-        "name" is given then it will default to the value of "constraint" or
-        "constraint_method" IF they are NOT a CODE ref or a RegExp ref.
-
-        The "params" value is a reference to an array of the parameters to
-        pass to the constraint method. If an element of the "params" list is
-        a scalar, it is assumed to be naming a key of the %input_hash and
-        that value is passed to the routine. If the parameter is a '\'
-        reference, then it is treated literally and passed unchanged to the
-        routine.
-
-        If you are using the older "constraint" over the new
-        "constraint_method" then don't forget to include the name of the
-        field to check in the "params" list. "constraint_method" provides
-        access to this value via the "get_current_*" methods (refer
-        Data::FormValidator::Constraints)
-
-        For more details see "VALIDATING INPUT BASED ON MULTIPLE FIELDS".
+         # An example of setting the constraint name.
+         my_zipcode_field => sub { 
+                my ($dfv, $val) = @_;
+                $dfv->set_current_constraint_name('my_constraint_name');
+                return $val =~ '/^\d{5}$/' 
+                }, 
 
     o   an array reference
 
@@ -402,18 +344,24 @@ INPUT PROFILE SPECIFICATION
         field. Any of the above options are valid entries the array. See
         "MULTIPLE CONSTRAINTS" below.
 
-  constraint_regexp_map
-     constraint_regexp_map => {
+        For more details see "VALIDATING INPUT BASED ON MULTIPLE FIELDS".
+
+  constraint_method_regexp_map
+     use Data::FormValidator::Constraints qw(:all);
+
+     # In your profile. 
+     constraint_method_regexp_map => {
          # All fields that end in _postcode have the 'postcode' constraint applied.
-         qr/_postcode$/    => 'postcode',
+         qr/_postcode$/    => postcode(),
      },                  
 
     A hash ref where the keys are the regular expressions to use and the
     values are the constraints to apply.
 
     If one or more constraints have already been defined for a given field
-    using "constraints", constraint_regexp_map will add an additional
-    constraint for that field for each regular expression that matches.
+    using "constraint_methods", "constraint_method_regexp_map" will add an
+    additional constraint for that field for each regular expression that
+    matches.
 
   untaint_all_constraints
      untaint_all_constraints => 1,
@@ -465,10 +413,6 @@ INPUT PROFILE SPECIFICATION
     Data::FormValidator::Constraints documentation for more information
 
   msgs
-    NOTE: This part of the interface is newer and may change. Use in
-    production code at your own caution. Contact the maintainer with any
-    questions or suggestions.
-
     This key is used to define parameters related to formatting error
     messages returned to the user.
 
@@ -504,9 +448,9 @@ INPUT PROFILE SPECIFICATION
          # Default invalid message, default's to "Invalid"
          invalid => 'Problematic!',
  
-         # message seperator for multiple messages
+         # message separator for multiple messages
          # Defaults to ' '
-         invalid_seperator => ' <br /> ',
+         invalid_separator => ' <br /> ',
  
          # formatting string, default given above.
          format => 'ERROR: %s',
@@ -616,6 +560,126 @@ ADVANCED VALIDATION
     statically. The profile could also be built on the fly with custom Perl
     code.
 
+BACKWARDS COMPATIBILITY
+  validate()
+        my( $valids, $missings, $invalids, $unknowns ) = 
+            Data::FormValidator->validate( \%input_hash, \%dfv_profile);
+
+    "validate()" provides a deprecated alternative to "check()". It has the
+    same input syntax, but returns a four element array, described as
+    follows
+
+    valids
+        This is a hash reference to the valid fields which were submitted in
+        the data. The data may have been modified by the various filters
+        specified.
+
+    missings
+        This is a reference to an array which contains the name of the
+        missing fields. Those are the fields that the user forget to fill or
+        filled with spaces. These fields may comes from the *required* list
+        or the *dependencies* list.
+
+    invalids
+        This is a reference to an array which contains the name of the
+        fields which failed one or more of their constraint checks.
+
+        Fields defined with multiple constraints will have an array ref
+        returned in the @invalids array instead of a string. The first
+        element in this array is the name of the field, and the remaining
+        fields are the names of the failed constraints.
+
+    unknowns
+        This is a list of fields which are unknown to the profile. Whether
+        or not this indicates an error in the user input is application
+        dependant.
+
+  constraints (profile key)
+    This is a supported but deprecated profile key. Using
+    "constraint_methods" is recommended instead, which provides a simpler,
+    more versatile interface.
+
+     constraints => {
+        cc_no      => {  
+            constraint  => "cc_number",
+            params        => [ qw( cc_no cc_type ) ],
+        },
+        cc_type    => "cc_type",
+        cc_exp    => "cc_exp",
+      },
+
+    A hash ref which contains the constraints that will be used to check
+    whether or not the field contains valid data.
+
+    The keys in this hash are field names. The values can be any of the
+    following:
+
+    o   A named constraint.
+
+        Example:
+
+         my_zipcode_field     => 'zip',
+
+        See Data::FormValidator::Constraints for the details of which
+        built-in constraints that are available.
+
+  hashref style of specifying constraints
+    Using a hash reference to specify a constraint is an older technique
+    used to name a constraint or supply multiple parameters.
+
+    Both of these interface issues are now better addressed with
+    "constraint_methods" and "$self-\"name_this('foo')>.
+
+     # supply multiple parameters
+     cc_no  => {  
+         constraint  => "cc_number",
+         params      => [ qw( cc_no cc_type ) ],
+     },
+
+     # name a constraint, useful for returning error messages
+     last_name => {
+         name => "ends_in_name",
+         constraint => qr/_name$/,
+     },
+
+    Using a hash reference for a constraint permits the passing of multiple
+    arguments. Required arguments are "constraint" or "constraint_method".
+    Optional arguments are "name" and "params".
+
+    A "name" on a constraints 'glues' the constraint to its error message in
+    the validator profile (refer "msgs" section below). If no "name" is
+    given then it will default to the value of "constraint" or
+    "constraint_method" IF they are NOT a CODE ref or a RegExp ref.
+
+    The "params" value is a reference to an array of the parameters to pass
+    to the constraint method. If an element of the "params" list is a
+    scalar, it is assumed to be naming a key of the %input_hash and that
+    value is passed to the routine. If the parameter is a '\' reference,
+    then it is treated literally and passed unchanged to the routine.
+
+    If you are using the older "constraint" over the new "constraint_method"
+    then don't forget to include the name of the field to check in the
+    "params" list. "constraint_method" provides access to this value via the
+    "get_current_*" methods (refer Data::FormValidator::Constraints)
+
+    For more details see "VALIDATING INPUT BASED ON MULTIPLE FIELDS".
+
+  constraint_regexp_map (profile key)
+    This is a supported by deprecated profile key. Using
+    "constraint_methods_regexp_map" is recommended instead.
+
+     constraint_regexp_map => {
+         # All fields that end in _postcode have the 'postcode' constraint applied.
+         qr/_postcode$/    => 'postcode',
+     },                  
+
+    A hash ref where the keys are the regular expressions to use and the
+    values are the constraints to apply.
+
+    If one or more constraints have already been defined for a given field
+    using "constraints", constraint_regexp_map will add an additional
+    constraint for that field for each regular expression that matches.
+
 SEE ALSO
     Other modules in this distribution:
 
@@ -638,10 +702,9 @@ SEE ALSO
 
     Related modules:
 
-    Data::FormValidator::Util::HTML
+    Data::FormValidator::Tutorial
 
-    Data::FormValidator::Tutorial is now out of date. The sample application
-    above may be a more useful introduction.
+    Data::FormValidator::Util::HTML
 
     CGI::Application::ValidateRM, a CGI::Application & Data::FormValidator
     glue module

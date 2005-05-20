@@ -1,4 +1,4 @@
-use Test::More tests => 14;
+use Test::More tests => 15;
 use strict;
 
 use Data::FormValidator;
@@ -147,7 +147,7 @@ like ($msgs->{req_1}, qr/span/,    'default formatting');
 eval{
 	$results =  $validator->check($input_hashref, 'default');
 };
-ok (not $@);
+is($@,'', 'survived eval');
 $msgs = $results->msgs;
 
 like($msgs->{error_sleep} ,qr/lesser.*Test|Test.*lesser/, 'multiple constraints constraint definition');
@@ -155,8 +155,7 @@ like($msgs->{error_sleep} ,qr/lesser.*Test|Test.*lesser/, 'multiple constraints 
 eval{
 	$results = $validator->check($simple_data, 'prefix');
 };
-ok (not $@) or
-  diag $@;
+is($@,'','survived eval');
 
 $msgs = $results->msgs({format => 'Control-Test: %s'});
 	
@@ -177,4 +176,30 @@ my @basic_input = (
 $results = Data::FormValidator->check(@basic_input);
 eval { $results->msgs };
 ok ((not $@), 'calling msgs method without hash definition');
+
+###
+{ 
+    my $test_name = 'Spelling "separator" correctly should work OK.';
+    my $results = Data::FormValidator->check(
+        {
+            field => 'value',
+        },
+        {
+            required => [qw/field/],
+            constraints => {
+                field => ['email','province'],
+            },
+            msgs => {
+                invalid_separator=> ' ## ',
+            },
+        }
+    );
+
+    my $msgs = $results->msgs;
+    like($msgs->{field},qr/##/,$test_name);
+}
+
+
+
+
 
