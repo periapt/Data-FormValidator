@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '4.00_01';
+$VERSION = '4.00_02';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -606,9 +606,9 @@ This overrides the untaint_all_constraints flag.
 
  missing_optional_valid => 1
 
-This can be set to a true value to cause missing optional fields to be included
-in the valid hash. By default they are not included-- this is the historical
-behavior. 
+This can be set to a true value to cause optional fields with empty values to
+be included in the valid hash. By default they are not included-- this is the
+historical behavior. 
 
 This is an important flag if you are using the contents of an "update" form to
 update a record in a database. Without using the option, fields that have been

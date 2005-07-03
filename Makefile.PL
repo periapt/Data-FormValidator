@@ -2,17 +2,17 @@
 use ExtUtils::MakeMaker;
 WriteMakefile
 (
-          'PL_FILES' => {},
-          'INSTALLDIRS' => 'site',
           'NAME' => 'Data::FormValidator',
           'VERSION_FROM' => 'lib/Data/FormValidator.pm',
           'PREREQ_PM' => {
-                           'Test::More' => 0,
-                           'Date::Calc' => 0,
-                           'Regexp::Common' => 0,
+                           'Date::Calc' => '0',
+                           'File::MMagic' => '1.17',
+                           'Image::Size' => '0',
                            'MIME::Types' => '1.005',
-                           'Image::Size' => 0,
-                           'File::MMagic' => '1.17'
-                         }
+                           'Regexp::Common' => '0',
+                           'Test::More' => '0'
+                         },
+          'INSTALLDIRS' => 'site',
+          'PL_FILES' => {}
         )
 ;

@@ -1,6 +1,6 @@
----
+--- #YAML:1.0
 name: Data-FormValidator
-version: 4.00_01
+version: 4.00_02
 author:
   - Mark Stosberg <mark@summersault.com>
 abstract: |-
@@ -17,16 +17,16 @@ requires:
 provides:
   Data::FormValidator:
     file: lib/Data/FormValidator.pm
-    version: 4.00_01
+    version: 4.00_02
   Data::FormValidator::Constraints:
     file: lib/Data/FormValidator/Constraints.pm
-    version: 4.0001
+    version: 4.0002
   Data::FormValidator::Constraints::Dates:
     file: lib/Data/FormValidator/Constraints/Dates.pm
-    version: 1.00_01
+    version: 1.00_02
   Data::FormValidator::Constraints::RegexpCommon:
     file: lib/Data/FormValidator/Results.pm
-    version: 4.0001
+    version: 4.0002
   Data::FormValidator::Constraints::Upload:
     file: lib/Data/FormValidator/Constraints/Upload.pm
     version: 1.0001
@@ -38,5 +38,5 @@ provides:
     version: 3.50
   Data::FormValidator::Results:
     file: lib/Data/FormValidator/Results.pm
-    version: 4.0001
-generated_by: Module::Build version 0.2609
+    version: 4.0002
+generated_by: Module::Build version 0.2611

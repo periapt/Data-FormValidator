@@ -1,5 +1,10 @@
 Build.PL
 Changes
+MANIFEST			This list of files
+MANIFEST.SKIP
+Makefile.PL
+README
+RELEASE_NOTES
 lib/Data/FormValidator.pm
 lib/Data/FormValidator/Constraints.pm
 lib/Data/FormValidator/Constraints/Dates.pm
@@ -7,19 +12,12 @@ lib/Data/FormValidator/Constraints/Upload.pm
 lib/Data/FormValidator/ConstraintsFactory.pm
 lib/Data/FormValidator/Filters.pm
 lib/Data/FormValidator/Results.pm
-Makefile.PL
-MANIFEST			This list of files
-MANIFEST.SKIP
-META.yml
-README
-RELEASE_NOTES
 t/00_base.t
 t/02_code_ref.t
 t/03_dependency.t
 t/04_arrayify_undef.t
 t/05_valid_ip_address.t
 t/06_regexp_map.t
-t/07_missing_optional.t
 t/09_require_some.t
 t/11_procedural_match.t
 t/13_validator_packages.t
@@ -35,8 +33,11 @@ t/26_qr.t
 t/27_qualify_ref_happy_death.t
 t/28_defaults_for_new.t
 t/30_filter_definedness.t
+t/ValidatorPackagesTest1.pm
+t/ValidatorPackagesTest2.pm
 t/check_profile_syntax.t
 t/constraint_method.t
+t/constraint_regexp_map_profile_reuse.t
 t/constraints_builtin.t
 t/constraints_builtin_closure.t
 t/constraints_factory.t
@@ -44,6 +45,8 @@ t/constraints_reuse.t
 t/dates.t
 t/dates_closure.t
 t/dependency_groups.t
+t/filter_constraints.t
+t/missing_optional.t
 t/msgs.t
 t/multiple_constraints.t
 t/pod.t
@@ -59,7 +62,6 @@ t/untaint.t
 t/upload.t
 t/upload_closure.t
 t/upload_post_text.txt
-t/ValidatorPackagesTest1.pm
-t/ValidatorPackagesTest2.pm
 test/00_base.badformat
 test/00_base.profile
+META.yml

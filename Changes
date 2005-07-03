@@ -1,3 +1,22 @@
+4.00_02 Sun Jul  3 14:31:13 EST 2005
+    [BUG FIXES]
+    - The preferred MIME type was not being returned by the 'file_format'
+      constraint for file uploads. This would have only affected cases where
+      the mime type sent by the browser differed from the one detected by DFV.
+      Thanks to Randal Schwartz for spotting this. (RT#12744). 
+
+    - Profile re-use when constraint_regexp_map is used is now fixed 
+      (Thanks to Cees Hek).
+
+    - The date_and_time constraint now understands this format: MMDDYYYY. 
+      (RT#12111, thanks to JMAY)
+
+    [INTERNALS]
+    - Regexp::Common is now only loaded if it's needed, making a significant
+      speed increase.
+
+    - Several test improvements and code cleanups 
+
 4.00_01
     [ENHANCEMENTS]
 	- The constraints interface has been overhauled to be more intuitive to use
