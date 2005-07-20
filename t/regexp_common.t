@@ -37,7 +37,7 @@ $results = Data::FormValidator->check(\%FORM, {
 
 
 ok((not $@), 'runtime errors') or diag $@;
-ok($results->valid->{good_ip}, 'good ip with tainting');
+ok($results->valid->{good_ip}, 'good ip with tainting'); 
 ok($results->invalid->{bad_ip}, 'bad ip with tainting'); 
 
 # Test passing flags

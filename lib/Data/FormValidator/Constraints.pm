@@ -3,18 +3,19 @@
 #
 #    This file is part of Data::FormValidator.
 #
-#    Author: Francis J. Lacoste 
+#    Author: Francis J. Lacoste <francis.lacoste@Contre.COM>
 #    Maintainer: Mark Stosberg <mark@summersault.com>
 #
 #    Copyright (C) 1999,2000 iNsu Innovations Inc.
 #    Copyright (C) 2001 Francis J. Lacoste
-#    Parts Copyright 1996-1999 by Michael J. Heins 
-#    Parts Copyright 1996-1999 by Bruce Albrecht  
+#    Parts Copyright 1996-1999 by Michael J. Heins <mike@heins.net>
+#    Parts Copyright 1996-1999 by Bruce Albrecht  <bruce.albrecht@seag.fingerhut.com>
 #
 #    Parts of this module are based on work by
-#    Bruce Albrecht, contributed to MiniVend.
+#    Bruce Albrecht, <bruce.albrecht@seag.fingerhut.com> contributed to
+#    MiniVend.
 #
-#    Parts also based on work by Michael J. Heins 
+#    Parts also based on work by Michael J. Heins <mikeh@minivend.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms same terms as perl itself.
@@ -23,161 +24,74 @@ package Data::FormValidator::Constraints;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = 4.00_02;
+$VERSION = 3.70;
 
 require Exporter;
 @ISA = qw(Exporter);
+@EXPORT_OK = qw(
+	valid_american_phone
+	valid_cc_exp
+	valid_cc_number
+	valid_cc_type
+	valid_email
+	valid_ip_address
+	valid_phone
+	valid_postcode
+	valid_province
+	valid_state
+	valid_state_or_province
+	valid_zip
+	valid_zip_or_postcode
+	match_american_phone
+	match_cc_exp
+	match_cc_number
+	match_cc_type
+	match_email
+	match_ip_address
+	match_phone
+	match_postcode
+	match_province
+	match_state
+	match_state_or_province
+	match_zip
+	match_zip_or_postcode	
+);
 
-BEGIN {
-    # A gift from Andy Lester, this trick shows me where eval's die. 
-    use Carp;
-    $SIG{__WARN__} = \&carp;
-    $SIG{__DIE__} = \&confess;
-
-    my @closures = (qw/
-        american_phone
-        cc_exp
-        cc_number
-        cc_type
-        email
-        ip_address
-        phone
-        postcode
-        province
-        state
-        state_or_province
-        zip
-        zip_or_postcode/);
-
-    # This be optimized with some of the voodoo that CGI.pm
-    # uses to AUTOLOAD dynamic functions. 
-    for my $func (@closures) {
-        # cc_number is defined statically
-        unless ($func eq 'cc_number') {
-            # Notice we have to escape some characters
-            # in the subroutine, which is really a string here. 
-
-            my $code = qq!
-            sub $func  {
-                return sub {
-                    my \$dfv = shift;
-                    use UNIVERSAL qw( can ) ;
-                    can(\$dfv, "name_this") 
-                    || die "first arg to $func was not an object. Must be called as a constraint_method.";
-
-                    \$dfv->name_this('$func');
-                    no strict 'refs';
-                    return &{"match_$func"}(\@_);
-                }
-            }
-            !;
-
-            eval "package Data::FormValidator::Constraints; $code";
-            die "couldn't create $func: $@" if $@;
-        }
-    }
-
-    @EXPORT_OK = (
-        @closures,
-        qw(
-        valid_american_phone
-        valid_cc_exp
-        valid_cc_number
-        valid_cc_type
-        valid_email
-        valid_ip_address
-        valid_phone
-        valid_postcode
-        valid_province
-        valid_state
-        valid_state_or_province
-        valid_zip
-        valid_zip_or_postcode
-        match_american_phone
-        match_cc_exp
-        match_cc_number
-        match_cc_type
-        match_email
-        match_ip_address
-        match_phone
-        match_postcode
-        match_province
-        match_state
-        match_state_or_province
-        match_zip
-        match_zip_or_postcode)
-    );
-
-    %EXPORT_TAGS = (
-        # regexp common is correctly empty here, because we handle the case on the fly with the import function below. 
-        regexp_common => [],
-        closures => \@closures, 
-        validators => [qw/
-            valid_american_phone
-            valid_cc_exp
-            valid_cc_number
-            valid_cc_type
-            valid_email
-            valid_ip_address
-            valid_phone
-            valid_postcode
-            valid_province
-            valid_state
-            valid_state_or_province
-            valid_zip
-            valid_zip_or_postcode
-        /],
-        matchers => [qw/
-            match_american_phone
-            match_cc_exp
-            match_cc_number
-            match_cc_type
-            match_email
-            match_ip_address
-            match_phone
-            match_postcode
-            match_province
-            match_state
-            match_state_or_province
-            match_zip
-            match_zip_or_postcode
-        /],		
-    );
-
-    sub import {
-        # This is Regexp::Common support.
-        # Here we are handling cases that look like this:
-        #
-        # my_field => FV_foo_bar(-zoo=>'queue'), 
-        if (grep { m/^:regexp_common$/ } @_) {
-            require Regexp::Common;
-            import  Regexp::Common 'RE_ALL';
-
-            for my $sub (grep { m/^RE_/}  keys %Data::FormValidator::Constraints:: ) {
-                no strict 'refs';
-                my $new_name = $sub;
-                $new_name =~ s/^RE_/FV_/;
-                *{caller() . "::$new_name"} = sub {
-                    my @params =  @_;
-                    return sub {
-                        my $dfv = shift;
-                        $dfv->name_this($new_name);
-
-                        no strict "refs";
-                        my $re = &$sub(-keep=>1,@params);
-                        return ($dfv->get_current_constraint_value =~ qr/^$re$/) ? $1 : undef; 
-                    }
-                }
-            }
-        }
-
-        Data::FormValidator::Constraints->export_to_level(1,@_);
-    }
-
-}
+%EXPORT_TAGS = (
+    validators => [qw/
+		valid_american_phone
+		valid_cc_exp
+		valid_cc_number
+		valid_cc_type
+		valid_email
+		valid_ip_address
+		valid_phone
+		valid_postcode
+		valid_province
+		valid_state
+		valid_state_or_province
+		valid_zip
+		valid_zip_or_postcode
+/],
+    matchers => [qw/
+		match_american_phone
+		match_cc_exp
+		match_cc_number
+		match_cc_type
+		match_email
+		match_ip_address
+		match_phone
+		match_postcode
+		match_province
+		match_state
+		match_state_or_province
+		match_zip
+		match_zip_or_postcode
+/],		
+);
 
 
-# sub DESTROY {}
+sub DESTROY {}
 
 =pod
 
@@ -187,17 +101,15 @@ Data::FormValidator::Constraints - Basic sets of constraints on input profile.
 
 =head1 SYNOPSIS
 
- use Data::FormValidator::Constraints qw(:all);
-
 In an Data::FormValidator profile:
 
-    constraint_methods => {
-	    email	=> email(),
-	    fax		=> american_phone(),
-	    phone	=> american_phone(),
-	    state	=> state(),
+    constraints  =>
+	{
+	    email	=> "email",
+	    fax		=> "american_phone",
+	    phone	=> "american_phone",
+	    state	=> "state",
 	},
-
 
 =head1 DESCRIPTION
 
@@ -212,19 +124,15 @@ constraints you can use.
 sub AUTOLOAD {
     my $name = $AUTOLOAD;
 
-	no strict qw/refs/;
-
-	$name =~ m/^(.*::)(valid_|RE_)(.*)/;
-
-	my ($pkg,$prefix,$sub) = ($1,$2,$3);
-
-	#warn "hello!  my ($pkg,$prefix,$sub) = ($1,$2,$3);";
-
     # Since all the valid_* routines are essentially identical we're
     # going to generate them dynamically from match_ routines with the same names.
-	if ((defined $prefix) and ($prefix eq 'valid_')) {
-		return defined &{$pkg.'match_' . $sub}(@_);
+	if ($name =~ m/^(.*::)valid_(.*)/) {
+		no strict qw/refs/;
+		return defined &{$1.'match_' . $2}(@_);
     }
+    else { 
+		die "subroutine '$name' not found"; 
+	}
 }
 
 =pod
@@ -277,12 +185,8 @@ province.
 
 sub match_state_or_province {
     my $match;
-    if ($match = match_state(@_)) { 
-		return $match; 
-	}
-    else {
-		return match_province(@_);
-	}
+    if ($match = match_state(@_)) { return $match; }
+    else {return match_province(@_); }
 }
 
 =pod
@@ -330,12 +234,8 @@ canadian postal code.
 
 sub match_zip_or_postcode {
     my $match;
-    if ($match = match_zip(@_)) { 
-		return $match; 
-	}
-    else {
-		return match_postcode(@_)
-	};
+    if ($match = match_zip(@_)) { return $match; }
+    else {return match_postcode(@_)};
 }
 =pod
 
@@ -412,36 +312,20 @@ sub match_american_phone {
 
 =item cc_number
 
-This constraint references the value of a credit card type field.
-
- constraint_methods => {
-    cc_no      => cc_number({fields => ['cc_type']}),
-  }
-
+This is takes two parameters, the credit card number and the credit cart
+type. You should take the hash reference option for using that constraint.
 
 The number is checked only for plausibility, it checks if the number could
 be valid for a type of card by checking the checksum and looking at the number
 of digits and the number of digits of the number.
 
-This functions is only good at catching typos. IT DOESN'T
+This functions is only good at weeding typos and such. IT DOESN'T
 CHECK IF THERE IS AN ACCOUNT ASSOCIATED WITH THE NUMBER.
 
 =cut
 
 # This one is taken from the contributed program to 
 # MiniVend by Bruce Albrecht
-
-sub cc_number {
-	my $dfv = shift;
-	my $attrs = pop; 
-	my $data = $dfv->get_input_data;
-
-	my ($cc_type_field) = @{ $attrs->{fields} };
-	return match_cc_number( 
-		$dfv->get_current_constraint_value,
-		$data->{$cc_type_field}
-	);
-}
 
 sub match_cc_number {
     my ( $the_card, $card_type ) = @_;
@@ -560,7 +444,6 @@ sub match_ip_address {
    else { return undef; }
 }
 
-
 1;
 
 __END__
@@ -575,23 +458,28 @@ Data::FormValidator also includes built-in support for using any of regular expr
 in L<Regexp::Common> as named constraints. Simply use the name of regular expression you want.
 This works whether you want to untaint the data or not. For example:
 
- use Data::FormValidator::Constraints qw(:regexp_common);
-
- constraint_methods => {
-	my_ip_address => FV_net_IPv4(),
-
-	# An example with parameters
-	other_ip      => FV_net_IPv4(-sep=>' '),
+ constraints => {
+	my_ip_address => 'RE_net_IPv4',
  }
 
-Notice that the routines are named with the prefix "FV_" instead of "RE_" now. 
-This is simply a visual cue that these are slightly modified versions. We've made
-a wrapper for each Regexp::Common routine so that it can be used as a named constraint 
-like this. 
+Some Regexp::Common regular expressions support additional flags that are
+expected to be passed into the routine as arguments. We support this as well.
+Just use hash style method of declaring a constraint, and the C<params> key:
 
-Be sure to check out the L<Regexp::Common> syntax for how its syntax works. It
-will make more sense to add future regular expressions to Regexp::Common rather
-than to Data::FormValidator.
+ constraints => {
+	my_ip_address => {
+		constraint => 'RE_net_IPv4',
+		params => [ \'-sep'=> \' ' ],
+	}
+ }
+
+Yes, it's a bit strange that you have pass the values to param by reference using
+the backslash ("\"). This is necessary to preserve some important backward compatibility
+that I haven't figured out how to work around yet. 
+
+Be sure to check out the L<Regexp::Common> syntax for how its syntax works. It will make
+more sense to add future regular expressions to Regexp::Common rather than to
+Data::FormValidator.
 
 =head1 PROCEDURAL INTERFACE
 
@@ -635,79 +523,23 @@ untainted value, you'll need to prefix the validator name with "match_"
 
 =head1 WRITING YOUR OWN CONSTRAINT ROUTINES
 
-=head2 New School Constraints Overview
+It's easy to create your own module of constraint routines. The easiest approach
+to this may be to check the source code of the Data::FormValidator module for example
+syntax. Also notice the C<validator_packages> option in the input profile.
 
-This is the current recommended way to write constraints. See also L<Old School
-Constraints>.
-
-The most flexible way to create constraints to use closures-- a normal seeming
-outer subroutine which returins a customized DFV method subroutine as a result.
-It's easy to do. These "constraint methods" can be named whatever you like, and
-imported normally into the name space where the profile is located. 
-
-Let's look at an example. 
-
-  # Near your profile	
-  # Of course, you don't have to export/import if your constraints are in the same
-  # package as the profile.  
-  use My::Constraints qw(coolness);
-
-  # In your profile
-  constraint_methods => {
-    email 			 => email(),
-	prospective_date => coolness(
-		min => 40,
-		max => 60,
-		{fields => [qw/personality smarts good_looks/]}
-	),
-  }
-
-Let's look at how this complex C<coolness> constraint method works. The 
-interface asks for users to define minimum and maximum coolness values, as
-well as declaring three data field names that we should peek into to look 
-their values. 
-
-Here's what the code might look like:
-
-  sub coolness {
- 	my ($min_cool,$max_cool, $attrs) = @_; 
-	my ($personality,$smarts,$looks) = @{ $attrs->{fields} } if $attrs->{fields};
-	return sub {
-		my $dfv = shift;
-
-		# Name it to refer to in the 'msgs' system.
-		$dfv->name_this('coolness');
-
-		my $val = $dfv->get_current_constraint_value();
-
-		# get other data to refer to
-	    my $data = $dfv->get_input_data;
-
-	    my $has_all_three = ($data->{personality} && $data->{smarts} && $data->{looks});
-		return ( ($val >= $min_cool) && ($val <= $max_cool) && $has_all_three );
-	}
-  }
-
-
-Here is documentation on how old school constraints are created. These are
-supported, but the the new school style documented above is recommended. 
-
-See also the C<validator_packages> option in the input profile, for loading 
-sets of old school constraints from other packages. 
-
-Old school constraint routines are named two ways. Some are named with the
-prefix C<match_> while others start with C<valid_>. The difference is that the
+You will find that constraint routines are named two ways. Some are named with
+the prefix C<match_> while others start with C<valid_>. The difference is that the
 C<match_> routines are built to untaint the data and return a safe version of
 it if it validates, while C<valid_> routines simply return a true value if the
 validation succeeds and false otherwise.
 
-It is preferable to write C<match_> routines that untaint data for the extra
-security benefits. Plus, Data::FormValidator will AUTOLOAD a C<valid_> version
-if anyone tries to use it, so you only need to write one routine to cover both
-cases. 
+It is preferable to write C<match_> routines that untaint data for the extra security
+benefits. Plus, Data::FormValidator will AUTOLOAD a C<valid_> version if anyone tries to
+use it, so you only need to write one routine to cover both cases. 
 
-Usually constraint routines only need one input, the value being specified.
-However, sometimes more than one value is needed. 
+Usually constraint routines only need one input, the value being specified. However,
+sometimes more than one value is needed. For that, the following syntax is
+recommended for calling the routines:
 
 B<Example>:
 
@@ -716,19 +548,17 @@ B<Example>:
 			params => [\100,\200],
 		},
 
-Using that syntax, the first parameter that will be passed to the routine is
+Using this syntax, the first parameter that will be passed to the routine is
 the Data::FormValidator object. The remaining parameters will come from the
 C<params> array. Strings will be replaced by the values of fields with the same names,
 and references will be passed directly.
 
-In addition to C<constraint_method>, there is also an even older technique using
+In addition to C<constraint_method>, there is also an older technique using
 the name C<constraint> instead. Routines that are designed to work with
 C<constraint> I<don't> have access to Data::FormValidator object, which
 means users need to pass in the name of the field being validated. Besides
 adding unnecessary syntax to the user interface, it won't work in conjunction
 with C<constraint_regexp_map>.
-
-=head2 Methods available for use inside of constraints
 
 A few useful methods to use on the Data::FormValidator::Results object are
 available to you to use inside of your routine.
@@ -780,59 +610,11 @@ This is useful for building a constraint on the fly based on it's name.
 It's used internally as part of the interface to the L<Regexp::Commmon>
 regular expressions.
 
-=item name_this
-=item set_current_constraint_name
-
-Sets the name of the current constraint being applied.
-
-B<Example>:
-
- sub my_constraint {
-	my @outer_params = @_;
-	return sub {
-		my $dfv = shift;
-		$dfv->set_current_constraint_name('my_constraint');
-		my @params = @outer_params;
-		# do something constraining here...
-	}
- }
-
-By returning a closure which uses this method,  you can build an advanced named
-constraint in your profile, before you actually have access to the DFV object
-that will be used later. See Data::FormValidator::Constraints::Upload for an
-example.
-
-C<name_this> is a provided as a shorter synonym.
-
 =back
 
 The C<meta()> method may also be useful to communicate meta data that
 may have been found. See L<Data::FormValidator::Results> for documentation
 of that method.
-
-=head1  BACKWARDS COMPATIBLITY
-
-Prior to Data::FormValidator 4.00, contraints were specified a bit differently.
-This older style is still supported. 
-
-It was not necessary to explicitly load some constraints into your name space,
-and the names were given as strings, like this:
-
-    constraints  => {
-	    email	      => 'email',
-	    fax		      => 'american_phone',
-	    phone	      => 'american_phone',
-	    state	      => 'state',
-		my_ip_address => 'RE_net_IPv4',
-		other_ip => {
-			constraint => 'RE_net_IPv4',
-			params => [ \'-sep'=> \' ' ],
-		},
-		my_cc_no      => {
-			constraint => 'cc_number',
-			params => [qw/cc_no cc_type/],
-		}
-	},
 
 
 =head1 SEE ALSO
@@ -851,7 +633,7 @@ L<Data::FormValidator::ConstraintsFactory>
 =head1 CREDITS
 
 Some of those input validation functions have been taken from MiniVend
-by Michael J. Heins
+by Michael J. Heins <mike@heins.net>
 
 The credit card checksum validation was taken from contribution by
 Bruce Albrecht to the MiniVend program.
@@ -870,7 +652,6 @@ All rights reserved.
 
 Parts Copyright 1996-1999 by Michael J. Heins 
 Parts Copyright 1996-1999 by Bruce Albrecht  
-Parts Copyright 2005	  by Mark Stosberg
 
 This program is free software; you can redistribute it and/or modify
 it under the terms as perl itself.

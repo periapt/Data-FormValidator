@@ -46,12 +46,12 @@ use vars qw( $VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS );
 BEGIN {
     require Exporter;
 
-    $VERSION = 1.4;
+    ($VERSION) = '$Revision: 1.3 $' =~ /Revision: ([\d.]+)/;
 
     @ISA = qw( Exporter );
 
     @EXPORT = ();
-    @EXPORT_OK = (qw/make_length_constraint/);
+    @EXPORT_OK = ();
 
     %EXPORT_TAGS = 
       (
@@ -312,22 +312,7 @@ sub make_ge_constraint {
     }
 }
 
-=head1 OTHER CONSTRAINTS
-
-=head2 make_length_constraint($max_length)
-
-This will create a constraint that will return true if the value
-has a length of less than or equal to $max_length
-
-=cut
-
-sub make_length_constraint {
-    my $max_length = shift;
-    return sub { length(shift) <= $max_length };
-}
-
 1;
-
 
 __END__
 

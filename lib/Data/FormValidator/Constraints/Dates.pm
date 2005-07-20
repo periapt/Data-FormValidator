@@ -19,25 +19,17 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 	
 ) ] );
 
-@EXPORT_OK = ( 
-    'date_and_time',	
-	@{ $EXPORT_TAGS{'all'} } 
-);
+@EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
 @EXPORT = qw(
 	match_date_and_time
 );
 
-$VERSION = '1.00_02';
+$VERSION = '0.03';
 
-sub date_and_time {
-	my $fmt = shift;
-	return sub {
-		my $self = shift;
-		$self->set_current_constraint_name('date_and_time');
-		return match_date_and_time($self,\$fmt);
-	}
-}
+# XXX TODO: find a way to make standard formats available.
+# For example, having a format that you know Postgres will accept as a valid
+
 
 sub match_date_and_time {
 	my $self = shift;
@@ -74,7 +66,7 @@ sub _prepare_date_format {
     #   die if it's not one of: Y M D h m s p  
 
     my ($i, @order) = 0;
-    $format =~ s{(Y+|M+|D+|h+|m+|s+|pp)(\?)?}{
+    $format =~ s{([YMDhms]+|pp)(\?)?}{
         my ($chr,$q) = ($1,$2);
         $chr = '' if not defined $chr;
         $q   = '' if not defined $chr;
@@ -110,6 +102,8 @@ sub _parse_date_format {
 
 
     return $untainted_date, map {defined $result{$_} ? $result{$_} : 0} qw(Y M D h m s);
+    #return $untainted_date, map $result{$_}, qw(Y M D h m s);
+    #return $untainted_date, map {defined $result{$_} ? $result{$_} : ''} qw(Y M D h m s);
 }
 
 1;
@@ -121,13 +115,15 @@ Data::FormValidator::Constraints::Dates - Validate Dates and Times
 
 =head1 SYNOPSIS
 
-	use Data::FormValidator::Constraints::Dates qw(date_and_time);
-
-	# In a DFV profile...
-	constraint_methods => {
-		# 'pp' denotes AM|PM for 12 hour representation
-		my_time_field => date_and_time('MM/DD/YYYY hh:mm:ss pp'), 
+	# In a Data::FormValidator Profile:
+	validator_packages => [qw(Data::FormValidator::Constraints::Dates)],
+	constraints => {
+		date_and_time_field 	  => {
+			constraint_method => 'date_and_time',
+			params=>[\'MM/DD/YYYY hh:mm:ss pp'], # 'pp' denotes AM|PM for 12 hour representation
+		},
 	}
+
 
 =head1 DESCRIPTION
 
@@ -154,24 +150,6 @@ do perlish things like this to create mor complex expressions:
 
 Internally L<Date::Calc> is used to test the functions.
 
-=head1 BACKWARDS COMPATIBILITY
-
-This older, more awkward interface is supported:
-
-	# In a Data::FormValidator Profile:
-	validator_packages => [qw(Data::FormValidator::Constraints::Dates)],
-	constraints => {
-		date_and_time_field 	  => {
-			constraint_method => 'date_and_time',
-			params=>[\'MM/DD/YYYY hh:mm:ss pp'], # 'pp' denotes AM|PM for 12 hour representation
-		},
-	}
-
-=head1 TODO 
-
-Find a way to make standard formats available.  For example, having a format
-that you know PostgreSQL will accept as a valid. 
-
 =head1 SEE ALSO
 
 L<Data::FormValidator>, L<DateTime::Format::Pg>, L<DateTime::Format::MySQL>, L<DateTime::Format::Mail>
@@ -180,11 +158,9 @@ L<Data::FormValidator>, L<DateTime::Format::Pg>, L<DateTime::Format::MySQL>, L<D
 
 Mark Stosberg, E<lt>mark@summersault.comE<gt>
 
-With magic code by Jan Krynicky. 
-
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2003-2005 by Mark Stosberg
+Copyright 2003 by Mark Stosberg
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 

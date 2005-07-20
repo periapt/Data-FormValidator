@@ -3,19 +3,19 @@
 #
 #    This file is part of Data::FormValidator.
 #
-#    Author: Francis J. Lacoste 
+#    Author: Francis J. Lacoste <francis.lacoste@iNsu.COM>
 #    Maintainer: Mark Stosberg <mark@stosberg.com>
 #
 #    Copyright (C) 1999 Francis J. Lacoste, iNsu Innovations
-#    Parts Copyright 1996-1999 by Michael J. Heins 
-#    Parts Copyright 1996-1999 by Bruce Albrecht  
-#    Parts Copyright 2001-2003 by Mark Stosberg 
+#    Parts Copyright 1996-1999 by Michael J. Heins <mike@heins.net>
+#    Parts Copyright 1996-1999 by Bruce Albrecht  <bruce.albrecht@seag.fingerhut.com>
+#    Parts Copyright 2001-2003 by Mark Stosberg <mark@stosberg.com>
 #
 #    Parts of this module are based on work by
-#    Bruce Albrecht,  contributed to
+#    Bruce Albrecht, <bruce.albrecht@seag.fingerhut.com> contributed to
 #    MiniVend.
 #
-#    Parts also based on work by Michael J. Heins 
+#    Parts also based on work by Michael J. Heins <mikeh@minivend.com>
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms same terms as perl itself.
@@ -23,7 +23,7 @@
 
 package Data::FormValidator;
 
-use 5.005; # for "qr" support, which isn't strictly required. 
+use 5.005; # for "qr" support, which isn't strictly required. -mls
 
 use Data::FormValidator::Results;
 use Data::FormValidator::Filters (qw/:filters/);
@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '4.00_02';
+$VERSION = '3.70';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -161,6 +161,8 @@ sub new {
     }, $class;
 }
 
+=pod
+
 =head1 VALIDATING INPUT
 
 =head2 check()
@@ -185,9 +187,52 @@ multiple values for a single key should be presented as an array reference.
 
 The second argument is a reference to the profile you are validating.
 
+=head2 validate()
+
+    my( $valids, $missings, $invalids, $unknowns ) = 
+        Data::FormValidator->validate( \%input_hash, \%dfv_profile);
+
+C<validate()> provides a deprecated alternative to C<check()>. It has the same input
+syntax, but returns a four element array, described as follows
+
+=over
+
+=item valids
+
+This is a hash reference to the valid fields which were submitted in
+the data. The data may have been modified by the various filters specified.
+
+=item missings
+
+This is a reference to an array which contains the name of the missing
+fields. Those are the fields that the user forget to fill or filled
+with spaces. These fields may comes from the I<required> list or the
+I<dependencies> list.
+
+=item invalids
+
+This is a reference to an array which contains the name of the fields
+which failed one or more of their constraint checks.
+
+Fields defined with multiple constraints will have an array ref returned in the
+@invalids array instead of a string. The first element in this array is the
+name of the field, and the remaining fields are the names of the failed
+constraints. 
+
+=item unknowns
+
+This is a list of fields which are unknown to the profile. Whether or
+not this indicates an error in the user input is application
+dependant.
+
+=back
+
 =head2 new()
 
-Using C<new()> is only needed for advanced usage, including these cases:
+Using C<new()> is only needed for advanced usage, so feel free to skip this
+section if you are just getting started.
+
+That said, using C<new()> is useful in some cases. These include:
 
 =over
 
@@ -312,6 +357,9 @@ sub check {
     return $results;
 }
 
+
+=pod
+
 =head1 INPUT PROFILE SPECIFICATION
 
 An input profile is a hash reference containing one or more of the following
@@ -319,8 +367,6 @@ keys.
 
 Here is a very simple input profile. Examples of more advanced options are
 described below.
-
-    use Data::FormValidator::Constraints qw(:all);
 
     my $profile = {
         optional => [qw( company
@@ -332,8 +378,8 @@ described below.
                          email 
                          address )],
 
-        constraint_methods => {
-            email => email(), 
+        constraints => {
+            email => 'email'
         }
     };
 
@@ -391,6 +437,7 @@ to be optional, you could use the regular expression, /^user_/
 
 =head2 dependencies
 
+
  dependencies   => {
 
     # If cc_no is entered, make cc_type and cc_exp required
@@ -422,6 +469,7 @@ will be reported as missing.
 This is a hash reference which contains information about groups of 
 interdependent fields. The keys are arbitrary names that you create and
 the values are references to arrays of the field names in each group. 
+
 
 =head2 defaults
 
@@ -475,22 +523,19 @@ use and the values are references to arrays of filters which will be
 applied to specific input fields. Used to apply filters to fields that
 match a regular expression. 
 
-=head2 constraint_methods
+=head2 constraints
 
- use Data::FormValidator::Constraints (qw:all);
-
- constraint_methods => {
-    cc_no      => cc_number({fields => ['cc_type']}),
-    cc_type    => cc_type(),
-    cc_exp     => cc_exp(),
+ constraints => {
+    cc_no      => {  
+        constraint  => "cc_number",
+        params        => [ qw( cc_no cc_type ) ],
+    },
+    cc_type    => "cc_type",
+    cc_exp    => "cc_exp",
   },
 
-A hash ref which contains the constraints that will be used to check whether or
-not the field contains valid data.
-
-B<Note:> To use the built-in constraints, they need to first be loaded into your
-name space using the syntax above. (Unless you are using the old C<constraints> key,  
-documented in L<BACKWARDS COMPATIBILITY>). 
+A hash ref which contains the constraints that
+will be used to check whether or not the field contains valid data.
 
 The keys in this hash are field names. The values can be any of the following:
 
@@ -510,7 +555,7 @@ built-in constraints that are available.
 
 =item o 
 
-A perl regular expression
+a perl regular expression
 
 B<Example>: 
 
@@ -527,27 +572,57 @@ write you own constraints like /^regex$/. That way you match the whole string.
 a subroutine reference, to supply custom code
 
 This will check the input and return true or false depending on the input's validity.
-By default, the constraint function recieves a L<Data::FormValidator::Results>
-object as its first argument, and the value to be validated as the second.  To
-validate a field based more inputs than just the field itself, see C<VALIDATING
-INPUT BASED ON MULTIPLE FIELDS>.
+By default, the constraint function takes one parameter, the field to be
+validated.  To validate a field based more inputs than just the field itself,
+see C<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
+
 
 B<Examples>:
 
- # Notice the use of 'pop'-- 
- # the object is the first arg passed to the method
- # while the value is the second, and last arg.
- my_zipcode_field => sub { my $val = pop;  return $val =~ '/^\d{5}$/' }, 
+ my_zipcode_field => sub { my $val = shift;  return $val =~ '/^\d{5}$/' }, 
  
  # OR you can reference a subroutine, which should work like the one above
  my_zipcode_field => \&my_validation_routine, 
 
- # An example of setting the constraint name.
- my_zipcode_field => sub { 
- 	my ($dfv, $val) = @_;
-	$dfv->set_current_constraint_name('my_constraint_name');
- 	return $val =~ '/^\d{5}$/' 
-	}, 
+=item o
+
+a hash reference, to name a constraint or supply multiple parameters.
+
+ # supply multiple parameters
+ cc_no  => {  
+     constraint  => "cc_number",
+     params         => [ qw( cc_no cc_type ) ],
+ },
+
+ # name a constraint, useful for returning error messages
+ last_name => {
+     name => "ends_in_name",
+     constraint => qr/_name$/,
+ },
+
+Using a hash reference for a constraint permits the passing of multiple
+arguments. Required arguments are C<constraint> or C<constraint_method>.
+Optional arguments are C<name> and C<params>.
+
+A C<name> on a constraints 'glues' the constraint to its error message
+in the validator profile (refer C<msgs> section below). If no C<name> is 
+given then it will default to the value of C<constraint> or 
+C<constraint_method> IF they are NOT a CODE ref or a RegExp ref.
+
+The C<params> value is a reference to an array of the parameters to pass 
+to the constraint method. 
+If an element of the C<params> list is a scalar, it is assumed to be naming
+a key of the %input_hash and that value is passed to the routine. 
+If the parameter is a '\' reference, then it is treated literally and passed 
+unchanged to the routine.
+
+If you are using the older C<constraint> over 
+the new C<constraint_method> then don't forget to include the name of the 
+field to check in the C<params> list. C<constraint_method> provides access
+to this value via the C<get_current_*> methods 
+(refer L<Data::FormValidator::Constraints>)
+
+For more details see L<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
 
 =item o 
 
@@ -557,26 +632,21 @@ An array reference is used to apply multiple constraints to a single
 field. Any of the above options are valid entries the array.
 See L<MULTIPLE CONSTRAINTS> below.
 
-For more details see L<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
-
 =back
 
-=head2 constraint_method_regexp_map
+=head2 constraint_regexp_map
 
- use Data::FormValidator::Constraints qw(:all);
-
- # In your profile. 
- constraint_method_regexp_map => {
+ constraint_regexp_map => {
      # All fields that end in _postcode have the 'postcode' constraint applied.
-     qr/_postcode$/    => postcode(),
+     qr/_postcode$/    => 'postcode',
  },                  
 
 A hash ref where the keys are the regular expressions to
 use and the values are the constraints to apply. 
 
 If one or more constraints have already been defined for a given field using
-C<constraint_methods>, C<constraint_method_regexp_map> will add an additional
-constraint for that field for each regular expression that matches.
+"constraints", constraint_regexp_map will add an additional constraint for that
+field for each regular expression that matches.
 
 =head2 untaint_all_constraints
 
@@ -801,8 +871,6 @@ sub _check_profile_syntax {
         die "Invalid input profile: needs to be a hash reference\n";
 
     my %valid_profile_keys = (
-		constraint_methods 	          => undef,
-		constraint_method_regexp_map  => undef,
         constraint_regexp_map=> undef,
         constraints=> undef,
         defaults=> undef,
@@ -858,26 +926,6 @@ sub _check_profile_syntax {
         die "Invalid input profile: constraint hashref keys not recognised [@invalid]\n";
     }
 
-	my %valid_msgs_hash_keys = (
-            prefix => undef,
-            missing => undef,
-            invalid => undef,
-            invalid_separator => undef,
-            invalid_seperator => undef,
-            format  => undef,
-            constraints  => undef,
-            any_errors => undef,
-	);
-	if (ref $profile->{msgs} eq 'HASH') {
-		for my $key (keys %{ $profile->{msgs} }) {
-			push @invalid, $key unless exists $valid_msgs_hash_keys{$key};
-		}
-	}
-    if (@invalid) {
-        die "Invalid input profile: msgs keys not recognized: [@invalid]\n";
-    }
-
-
 }
 
 
@@ -891,148 +939,11 @@ __END__
 
 =head1 ADVANCED VALIDATION
 
-For even more advanced validation, you will likely want to read the
-documentation for other modules in this distribution, linked below. Also keep
-in mind that the  Data::FormValidator profile structure is just another data
-structure. There is no reason why it needs to be defined statically. The
-profile could also be built on the fly with custom Perl code.
-
-=head1 BACKWARDS COMPATIBILITY
-
-=head2 validate()
-
-    my( $valids, $missings, $invalids, $unknowns ) = 
-        Data::FormValidator->validate( \%input_hash, \%dfv_profile);
-
-C<validate()> provides a deprecated alternative to C<check()>. It has the same input
-syntax, but returns a four element array, described as follows
-
-=over
-
-=item valids
-
-This is a hash reference to the valid fields which were submitted in
-the data. The data may have been modified by the various filters specified.
-
-=item missings
-
-This is a reference to an array which contains the name of the missing
-fields. Those are the fields that the user forget to fill or filled
-with spaces. These fields may comes from the I<required> list or the
-I<dependencies> list.
-
-=item invalids
-
-This is a reference to an array which contains the name of the fields
-which failed one or more of their constraint checks.
-
-Fields defined with multiple constraints will have an array ref returned in the
-@invalids array instead of a string. The first element in this array is the
-name of the field, and the remaining fields are the names of the failed
-constraints. 
-
-=item unknowns
-
-This is a list of fields which are unknown to the profile. Whether or
-not this indicates an error in the user input is application
-dependant.
-
-=back
-
-=head2 constraints (profile key)
-
-This is a supported but deprecated profile key. Using C<constraint_methods> is
-recommended instead, which provides a simpler, more versatile interface. 
-
- constraints => {
-    cc_no      => {  
-        constraint  => "cc_number",
-        params        => [ qw( cc_no cc_type ) ],
-    },
-    cc_type    => "cc_type",
-    cc_exp    => "cc_exp",
-  },
-
-A hash ref which contains the constraints that
-will be used to check whether or not the field contains valid data.
-
-The keys in this hash are field names. The values can be any of the following:
-
-=over 
-
-=item o
-
-A named constraint. 
-
-B<Example>: 
-
- my_zipcode_field     => 'zip',
-
-See L<Data::FormValidator::Constraints> for the details of which
-built-in constraints that are available.
-
-=back
-
-=head2 hashref style of specifying constraints 
-
-Using a hash reference to specify a constraint is an older technique
-used to name a constraint or supply multiple parameters.
-
-Both of these interface issues are now better addressed with C<constraint_methods>
-and C<$self-\>name_this('foo')>.
-
- # supply multiple parameters
- cc_no  => {  
-     constraint  => "cc_number",
-     params      => [ qw( cc_no cc_type ) ],
- },
-
- # name a constraint, useful for returning error messages
- last_name => {
-     name => "ends_in_name",
-     constraint => qr/_name$/,
- },
-
-Using a hash reference for a constraint permits the passing of multiple
-arguments. Required arguments are C<constraint> or C<constraint_method>.
-Optional arguments are C<name> and C<params>.
-
-A C<name> on a constraints 'glues' the constraint to its error message
-in the validator profile (refer C<msgs> section below). If no C<name> is 
-given then it will default to the value of C<constraint> or 
-C<constraint_method> IF they are NOT a CODE ref or a RegExp ref.
-
-The C<params> value is a reference to an array of the parameters to pass 
-to the constraint method. 
-If an element of the C<params> list is a scalar, it is assumed to be naming
-a key of the %input_hash and that value is passed to the routine. 
-If the parameter is a '\' reference, then it is treated literally and passed 
-unchanged to the routine.
-
-If you are using the older C<constraint> over 
-the new C<constraint_method> then don't forget to include the name of the 
-field to check in the C<params> list. C<constraint_method> provides access
-to this value via the C<get_current_*> methods 
-(refer L<Data::FormValidator::Constraints>)
-
-For more details see L<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
-
-=head2 constraint_regexp_map (profile key)
-
-This is a supported by deprecated profile key. Using
-C<constraint_methods_regexp_map> is recommended instead.
-
- constraint_regexp_map => {
-     # All fields that end in _postcode have the 'postcode' constraint applied.
-     qr/_postcode$/    => 'postcode',
- },                  
-
-A hash ref where the keys are the regular expressions to
-use and the values are the constraints to apply. 
-
-If one or more constraints have already been defined for a given field using
-"constraints", constraint_regexp_map will add an additional constraint for that
-field for each regular expression that matches.
+For even more advanced validation, you will likely want to read the documentation
+for other modules in this distribution, linked below. Also keep in mind that the  
+Data::FormValidator profile structure is just another data structure. There is
+no reason why it needs to be defined statically. The profile could also be built
+on the fly with custom Perl code.
 
 =head1 SEE ALSO
 
@@ -1098,6 +1009,12 @@ Albrecht to the MiniVend program.
 =head1 BUGS
 
 L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Data-FormValidator> 
+
+=head1 CONTRIBUTING
+
+Patches, questions and feedback are welcome. This project is managed using
+the darcs source control system ( http://www.darcs.net/ ). My darcs archive is here:
+http://mark.stosberg.com/darcs_hive/dfv/
 
 =head1 AUTHOR
 

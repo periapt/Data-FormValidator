@@ -10,7 +10,8 @@ WriteMakefile
                            'Image::Size' => '0',
                            'MIME::Types' => '1.005',
                            'Regexp::Common' => '0',
-                           'Test::More' => '0'
+                           'Test::More' => '0',
+                           'overload' => '0'
                          },
           'INSTALLDIRS' => 'site',
           'PL_FILES' => {}

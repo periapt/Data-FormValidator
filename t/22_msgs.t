@@ -147,7 +147,7 @@ like ($msgs->{req_1}, qr/span/,    'default formatting');
 eval{
 	$results =  $validator->check($input_hashref, 'default');
 };
-is($@,'', 'survived eval');
+ok (not $@);
 $msgs = $results->msgs;
 
 like($msgs->{error_sleep} ,qr/lesser.*Test|Test.*lesser/, 'multiple constraints constraint definition');
@@ -155,7 +155,8 @@ like($msgs->{error_sleep} ,qr/lesser.*Test|Test.*lesser/, 'multiple constraints 
 eval{
 	$results = $validator->check($simple_data, 'prefix');
 };
-is($@,'','survived eval');
+ok (not $@) or
+  diag $@;
 
 $msgs = $results->msgs({format => 'Control-Test: %s'});
 	

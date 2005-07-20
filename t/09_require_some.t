@@ -33,6 +33,9 @@ ok($valids->{blue});
 ok($valids->{green});
 ok($valids->{one});
 
+#use Data::Dumper;
+#warn Dumper ($missings,[grep {/2_of_3_fail/} @$missings]);
+
 ok(grep {/2_of_3_fail/} @$missings); 
 
 

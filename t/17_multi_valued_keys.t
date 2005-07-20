@@ -71,6 +71,8 @@ ok(!$v, 'multiple valued fields containing only undefined values should not be v
 
 ###
 
+use Data::Dumper;
+
 eval { $r = Data::FormValidator->check({ 
             cc_type => ['Check'],
         },
@@ -85,4 +87,7 @@ eval { $r = Data::FormValidator->check({
         }) };
 diag "error: $@" if $@;
 
-ok($r->missing('cc_num'), 'a single valued array should still trigger the dependency check');
+ok($r->missing('cc_num'), 'a single valued array should still trigger the dependency check')
+    || diag Dumper($r);
+
+; 
