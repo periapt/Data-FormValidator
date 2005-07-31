@@ -24,7 +24,7 @@ use overload
 
 
 
-$VERSION = 3.70;
+$VERSION = 3.71;
 
 =pod
 

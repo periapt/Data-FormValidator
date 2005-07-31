@@ -2,6 +2,7 @@ Build.PL
 Changes
 MANIFEST			This list of files
 MANIFEST.SKIP
+META.yml
 Makefile.PL
 README
 lib/Data/FormValidator.pm
@@ -44,15 +45,16 @@ t/constraints_builtin.t
 t/constraints_reuse.t
 t/dates.t
 t/dependency_groups.t
+t/filters_builtin.t
 t/missing_optional.t
 t/multiple_constraints.t
 t/procedural_valid.t
 t/profile_checking.t
 t/regexp_common.t
 t/results_success.t
+t/undefined_arrayref.t
 t/unknown.t
 t/upload.t
 t/upload_post_text.txt
 test/00_base.badformat
 test/00_base.profile
-META.yml

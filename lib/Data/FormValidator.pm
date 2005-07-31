@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '3.70';
+$VERSION = '3.71';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -211,8 +211,9 @@ I<dependencies> list.
 
 =item invalids
 
-This is a reference to an array which contains the name of the fields
-which failed one or more of their constraint checks.
+This is a reference to an array which contains the name of the fields which
+failed one or more of their constraint checks. If there are no invalid fields,
+an empty arrayref will be returned. 
 
 Fields defined with multiple constraints will have an array ref returned in the
 @invalids array instead of a string. The first element in this array is the
@@ -315,7 +316,7 @@ sub validate {
 
     my $valid   = $data_set->valid();
     my $missing = $data_set->missing();
-    my $invalid = $data_set->{validate_invalid};
+    my $invalid = $data_set->{validate_invalid} || [];
     my $unknown = [ $data_set->unknown ];
 
     return ( $valid, $missing, $invalid, $unknown );
@@ -400,8 +401,8 @@ spaces will be reported as missing.
 
  required_regexp => qr/city|state|zipcode/,
 
-This is a regular expression used to specify additional fields which are
-required.
+This is a regular expression used to specify additional field names for which values
+will be required.
 
 =head2 require_some
 
