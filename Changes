@@ -1,5 +1,57 @@
-3.71 Sun Jul 31 12:28:21 EST 2005
+4.00 Sun Aug 14 10:57:25 EST 2005
+
+    *** NOTE ***
+    This a major update with a significant code changes. While the test suite
+    indicates we have 100% compatibility with 3.x, you are encouraged to test
+    this release with your own applications before deploying it in a production
+    environment. 
+
+    [ENHANCEMENTS]
+	- The constraints interface has been overhauled to be more intuitive to use
+	  with parameterized constraints. This included added new two new profile
+	  keys: 'constraint_methods' and 'constraint_method_regexp_map'. All of
+	  the old syntax is still supported, but de-emphasized in the documentation.
+	  See RELEASE_NOTES for details. 
+
+	- A new method has been added to help building custom constraints:
+	  "set_current_constraint_name('foo')" will set the name of a constraint
+	  from within itself. An alias named 'name_this()' is provided for brevity. 
+	  See the section on "Writing your own constraints" in DFV::Constraints
+	  for details. 
+
+    - success() method added to Results object. This is an easy way to check
+      that there were no missing or invalid fields. (Michael Peters). 
+
+    - 'separator' was misspelled consistently in the the docs, code and tests.
+      The proper spelling as well as the legacy typo spelling are now
+      supported, although the typo'ed version is no longer documented, except
+      for here. :) Thanks to Terrence Brannon for spotting this.
+
+	- The 'msgs' hash in the profile is now validated to make sure it includes only
+	  valid keys. This should help to spot some errors faster.  
+
+    - ::Constraints::Upload now supports CGI::Simple, thanks to David Emery. 
+
+    - Documentation for required_regexp has been improved. (William McKee)
+
+    - support for coderefs as default values (Marcello)
+
+    - Improved field_filters documentation, thanks to Andrew Brosnan.
+
     [BUG FIXES]
+	- RT#12220: Canadian Province RE were updated. (Steve Simms).   
+
+    - The preferred MIME type was not being returned by the 'file_format'
+      constraint for file uploads. This would have only affected cases where
+      the mime type sent by the browser differed from the one detected by DFV.
+      Thanks to Randal Schwartz for spotting this. (RT#12744). 
+
+    - Profile re-use when constraint_regexp_map is used is now fixed 
+      (Thanks to Cees Hek).
+
+    - The date_and_time constraint now understands this format: MMDDYYYY. 
+      (RT#12111, thanks to JMAY)
+
     - This one is worth a brief explanation. When this old syntax was used:
 
       my ( $valid, $missing, $invalid, $unknown ) = Data::FormValidator->validate({}, {} );
@@ -17,39 +69,14 @@
 
       Those who use the $results object are unaffected.
 
-    [INTERNALS]
-    - Add many failing TODO tests for built-in filters. See t/filters_builtin.t
+    [INTERALS]
+    - Add many failing TODO tests for built-in filters. See t/filters_builtin.t 
 
-3.70 Tue Jul 19 21:02:06 EST 2005
-
-    [ENHANCEMENTS]
-    - DFV::Constraints::Upload can now be used with CGI::Simple (David Emery)
-
-    - success() method added to Results object. This is an easy way to check
-      that there were no missing or invalid fields. (Michael Peters).  To make
-      an even more compact syntax, you can simply use the $results object in a
-      boolean context to check for success. The CGI::Application ValidateRM
-      plugin will make use of this. 
-
-    - 'separator' was misspelled consistently in the the docs, code and tests.
-      The proper spelling as well as the legacy typo spelling are now
-      supported, although the typo'ed version is no longer documented, except
-      for here. :) Thanks to Terrence Brannon for spotting this.
-
-    - Documentation and test improvements related to missing_optional_valid
-
-    - Update CA province codes (Steve Simms)
-
-   [BUG FIXES]
-   - Possibly fix mod_perl/CGI.pm reloading bug
-
-   [INTERNALS]
-   - Location of public darcs repo is mentioned in the docs
-
-   - A new test was added to check that no warnings are emitted when an untainted
+    - A new test was added to check that no warnings are emitted when an untainted
       constraint returns undef (Michael Peters)
-  
-   - Several test updates and documentation improvements. 
+
+* 3.x releases after 3.63 happened on a different branch. All of the
+  improvements there should be reflected above. 
 
 3.63
 	[BUG FIXES]

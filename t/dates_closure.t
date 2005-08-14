@@ -1,6 +1,8 @@
 #!/usr/bin/perl -w
 use Test::More qw/no_plan/;
-BEGIN { use_ok('Data::FormValidator::Constraints::Dates') };
+BEGIN { 
+	use_ok('Data::FormValidator::Constraints::Dates') 
+};
 use strict;
 
 my $format = Data::FormValidator::Constraints::Dates::_prepare_date_format('MM/DD/YYYY hh?:mm:ss pp');
@@ -26,19 +28,14 @@ ok ($min == 1,'min');
 ok ($sec == 3,'sec'); 
 
 use Data::FormValidator;
+use Data::FormValidator::Constraints::Dates qw( date_and_time );
 
 my $simple_profile = {
 	required => [qw/date_and_time_field_bad date_and_time_field_good/],
 	validator_packages => [qw/Data::FormValidator::Constraints::Dates/],
-	constraints => {
-		'date_and_time_field_good' => {
-			constraint_method => 'date_and_time',
-			params=>[\'MM/DD/YYYY hh:mm pp'],
-		},
-		'date_and_time_field_bad' => {
-			constraint_method => 'date_and_time',
-			params=>[\'MM/DD/YYYY hh:mm pp'],
-		},
+	constraint_methods => {
+		'date_and_time_field_good' => date_and_time('MM/DD/YYYY hh:mm pp'),
+		'date_and_time_field_bad'  => date_and_time('MM/DD/YYYY hh:mm pp'),
 	},
 	untaint_constraint_fields=>[qw/date_and_time_field/],
 };
@@ -62,12 +59,4 @@ ok ((not $@), 'eval') or
 ok ($valids->{date_and_time_field_good}, 'expecting date_and_time success');
 ok ((grep /date_and_time_field_bad/, @$invalids), 'expecting date_and_time failure');
 
-{ 
-    my $format = Data::FormValidator::Constraints::Dates::_prepare_date_format('MMDDYYYY');
-    my ($date,$year, $month, $day, $hour, $min, $sec) = 
-          Data::FormValidator::Constraints::Dates::_parse_date_format($format, '12022003');
-    ok ($date eq '12022003','returning date');
-    ok ($year == 2003, 'basic date prepare and parse test');
-    ok ($month == 12);
-    ok ($day == 2);
-}
+

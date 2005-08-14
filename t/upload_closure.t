@@ -45,32 +45,23 @@ binmode(IN);
 my $q = new CGI;
 
 use Data::FormValidator;
+use Data::FormValidator::Constraints::Upload qw(
+	&file_format
+	&file_max_bytes
+	&image_max_dimensions
+);
+
 my $default = {
 		required=>[qw/hello_world does_not_exist_gif 100x100_gif 300x300_gif/],
 		validator_packages=> 'Data::FormValidator::Constraints::Upload',
-		constraints => {
-			'hello_world' => {
-				constraint_method => 'file_format',
-				params=>[],
-			},
-			'does_not_exist_gif' => {
-				constraint_method => 'file_format',
-				params=>[],
-			},
+		constraint_methods => {
+			'hello_world' => file_format(),
+			'does_not_exist_gif' => file_format(),
 			'100x100_gif' => [
-				{
-					constraint_method => 'file_format',
-					params=>[],
-				},
-				{
-					constraint_method => 'file_max_bytes',
-					params=>[],
-				}
+					file_format(),
+					file_max_bytes(),
 			],
-			'300x300_gif' => {
-				constraint_method => 'file_max_bytes',
-				params => [\100],
-			},
+			'300x300_gif' => file_max_bytes(100),
 		},
 	};
 
@@ -79,7 +70,7 @@ my ($results);
 eval {
 	$results = $dfv->check($q, 'default');
 };
-ok(not $@) or diag $@;
+is($@, '', 'survived eval');
 
 my $valid   = $results->valid;
 my $invalid = $results->invalid; # as hash ref
@@ -113,15 +104,9 @@ ok($results->meta('100x100_gif')->{bytes}>0, 'setting bytes meta data');
 my $profile_2  = {
 	required=>[qw/hello_world 100x100_gif 300x300_gif/],
 	validator_packages=> 'Data::FormValidator::Constraints::Upload',
-	constraints => {
-		'100x100_gif' => {
-			constraint_method => 'image_max_dimensions',
-			params => [\200,\200],
-		},
-		'300x300_gif' => {
-			constraint_method => 'image_max_dimensions',
-			params => [\200,\200],
-		},
+	constraint_methods => {
+		'100x100_gif' => image_max_dimensions(200,200),
+		'300x300_gif' => image_max_dimensions(200,200),
 	},
 };
 
@@ -129,7 +114,7 @@ $dfv = Data::FormValidator->new({ profile_2 => $profile_2});
 eval {
 	$results = $dfv->check($q, 'profile_2');
 };
-ok(not $@) or diag $@;
+is($@,'', 'survived eval');
 
 $valid   = $results->valid;
 $invalid = $results->invalid; # as hash ref
@@ -146,11 +131,8 @@ ok( $results->meta('100x100_gif')->{width} > 0, 'setting height as meta data');
 my $profile_3  = {
 	required=>[qw/hello_world 100x100_gif 300x300_gif/],
 	validator_packages=> 'Data::FormValidator::Constraints::Upload',
-	constraint_regexp_map => {
-		'/[13]00x[13]00_gif/'	=> {
-			constraint_method => 'image_max_dimensions',
-			params => [\200,\200],
-		}
+	constraint_method_regexp_map => {
+		'/[13]00x[13]00_gif/'	=> image_max_dimensions(200,200),
 	}
 };
 

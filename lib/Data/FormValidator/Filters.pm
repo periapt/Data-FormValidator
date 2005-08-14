@@ -15,7 +15,7 @@ package Data::FormValidator::Filters;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = '3.50';
+$VERSION = 4.00;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -69,7 +69,7 @@ example, if you want to access the I<trim> function directly, you could either d
 
     use Data::FormValidator::Filters (qw/filter_trim/);
     or
-    use Data::FormValidator::Filters (:filters);
+    use Data::FormValidator::Filters (qw/:filters/);
 
     $string = filter_trim($string);
 
@@ -361,12 +361,26 @@ __END__
 
 =head1 SEE ALSO
 
-Data::FormValidator(3) Data::FormValidator::Constraints(3)
+=over
+
+=item o
+
+ L<Data::FormValidator>
+
+=item o
+
+ L<Data::FormValidator::Constraints>
+
+=item o
+
+ L<Data::FormValidator::Filters::Image> - shrink incoming image uploads
+
+=back
 
 =head1 AUTHOR
 
-Author:  Francis J. Lacoste <francis.lacoste@iNsu.COM>
-Maintainer: Mark Stosberg <mark@summersault.com>
+ Author:  Francis J. Lacoste <francis.lacoste@iNsu.COM>
+ Maintainer: Mark Stosberg <mark@summersault.com>
 
 =head1 COPYRIGHT
 
