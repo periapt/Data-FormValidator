@@ -2,6 +2,7 @@ Build.PL
 Changes
 MANIFEST			This list of files
 MANIFEST.SKIP
+META.yml
 Makefile.PL
 README
 RELEASE_NOTES
@@ -46,9 +47,12 @@ t/dates.t
 t/dates_closure.t
 t/dependency_groups.t
 t/filter_constraints.t
+t/filters_builtin.t
+t/get_input_data.t
 t/missing_optional.t
 t/msgs.t
 t/multiple_constraints.t
+t/params_not_mentioned.t
 t/pod.t
 t/procedural_valid.t
 t/profile_checking.t
@@ -56,6 +60,7 @@ t/regexp_common.t
 t/regexp_common_closure.t
 t/results_success.t
 t/simple.t
+t/undefined_arrayref.t
 t/unknown.t
 t/untaint.pl
 t/untaint.t
@@ -64,4 +69,3 @@ t/upload_closure.t
 t/upload_post_text.txt
 test/00_base.badformat
 test/00_base.profile
-META.yml

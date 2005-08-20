@@ -22,7 +22,7 @@ use vars qw/$AUTOLOAD $VERSION/;
 use overload
   'bool' => \&_bool_overload_based_on_success;
 
-$VERSION = 4.00;
+$VERSION = 4.01;
 
 =pod
 
@@ -84,7 +84,7 @@ sub _process {
 
  	# Copy data and assumes that all is valid to start with
  		
-	my %data        = $self->_get_data($data);
+	my %data        = $self->_get_input_as_hash($data);
     my %valid	    = %data;
     my @missings    = ();
     my @unknown	    = ();
@@ -656,7 +656,14 @@ sub meta {
 
 sub get_input_data {
 	my $self = shift;
-	return $self->{__INPUT_DATA};
+    my %p = @_;
+    if ($p{as_hashref}) {
+        my %hash = $self->_get_input_as_hash( $self->{__INPUT_DATA} );
+        return \%hash;
+    }
+    else {
+	    return $self->{__INPUT_DATA};
+    }
 }
 
 sub get_current_constraint_field {
@@ -939,7 +946,7 @@ sub _constraint_check_match {
 }
 
 # Figure out whether the data is a hash reference of a param-capable object and return it has a hash
-sub _get_data {
+sub _get_input_as_hash {
 	my ($self,$data) = @_;
 	$self->{__INPUT_DATA} = $data;
 	require UNIVERSAL;
@@ -1083,9 +1090,10 @@ sub _check_constraints {
 			$c->{is_method} = 1 if $force_method_p;
 
 			my $is_value_list = 1 if (ref $valid->{$field} eq 'ARRAY');
+            my %param_data = ( $self->_get_input_as_hash($self->get_input_data) , %$valid );
 			if ($is_value_list) {
 				foreach (my $i = 0; $i < scalar @{ $valid->{$field}} ; $i++) {
-					my @params = $self->_constraint_input_build($c,$valid->{$field}->[$i],$valid);
+					my @params = $self->_constraint_input_build($c,$valid->{$field}->[$i],\%param_data);
 
 					# set current constraint field for use by get_current_constraint_value
 					$self->{__CURRENT_CONSTRAINT_VALUE} = $valid->{$field}->[$i];
@@ -1100,7 +1108,7 @@ sub _check_constraints {
 				}
 			}
 			else {
-				my @params = $self->_constraint_input_build($c,$valid->{$field},$valid);
+				my @params = $self->_constraint_input_build($c,$valid->{$field},\%param_data);
 
 				# set current constraint field for use by get_current_constraint_value
 				$self->{__CURRENT_CONSTRAINT_VALUE} = $valid->{$field};
