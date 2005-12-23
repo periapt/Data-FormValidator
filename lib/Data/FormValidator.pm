@@ -9,7 +9,7 @@
 #    Copyright (C) 1999 Francis J. Lacoste, iNsu Innovations
 #    Parts Copyright 1996-1999 by Michael J. Heins 
 #    Parts Copyright 1996-1999 by Bruce Albrecht  
-#    Parts Copyright 2001-2003 by Mark Stosberg 
+#    Parts Copyright 2001-2005 by Mark Stosberg 
 #
 #    Parts of this module are based on work by
 #    Bruce Albrecht,  contributed to
@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '4.02';
+$VERSION = '4.10';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -563,8 +563,8 @@ B<Example>:
 
  my_zipcode_field   => qr/^\d{5}$/, # match exactly 5 digits
 
-If this field is named in the C<untaint_constraint_fields>, or 
-C<untaint_all_constraints> is effective, be aware of the following: If you
+If this field is named in C<untaint_constraint_fields> or C<untaint_regexp_map>,
+or C<untaint_all_constraints> is effective, be aware of the following: If you
 write your own regular expressions and only match part of the string then
 you'll only get part of the string in the valid hash. It is a good idea to
 write you own constraints like /^regex$/. That way you match the whole string.
@@ -576,8 +576,8 @@ a subroutine reference, to supply custom code
 This will check the input and return true or false depending on the input's validity.
 By default, the constraint function recieves a L<Data::FormValidator::Results>
 object as its first argument, and the value to be validated as the second.  To
-validate a field based more inputs than just the field itself, see C<VALIDATING
-INPUT BASED ON MULTIPLE FIELDS>.
+validate a field based more inputs than just the field itself, see 
+L<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
 
 B<Examples>:
 
@@ -637,7 +637,7 @@ may not provide untainting.
 See L<WRITING YOUR OWN CONSTRAINT ROUTINES> in the Data::FormValidator::Constraints
 documention for more information.
 
-This is overridden by C<untaint_constraint_fields>
+This is overridden by C<untaint_constraint_fields> and C<untaint_regexp_map>.
 
 =head2 untaint_constraint_fields
 
@@ -646,6 +646,20 @@ This is overridden by C<untaint_constraint_fields>
 Specifies that one or more fields will be untainted if they pass their
 constraint(s). This can be set to a single field name or an array reference of
 field names. The untainted data will be returned in the valid hash. 
+
+This overrides the untaint_all_constraints flag.
+
+=head2 untaint_regexp_map
+
+ untaint_regexp_map => [qr/some_field_\d/],
+
+Specifies that certain fields will be untained if they pass their constraints
+and match one of the regular expressions supplied. This can be set to a single
+regex, or an array reference of regexes. The untainted data will be returned
+in the valid hash.
+
+The above example would untaint the fields named C<some_field_1>, and C<some_field_2>
+but not C<some_field>. 
 
 This overrides the untaint_all_constraints flag.
 
@@ -735,6 +749,24 @@ as providing custom messages per field, and handling multiple constraints:
 The hash that's prepared can be retrieved through the C<msgs> method
 described in the L<Data::FormValidator::Results> documentation.
 
+=head2 msgs - callback 
+
+I<This is a new feature. While it expected to be forward-compatible, it hasn't
+yet received the testing the rest of the API has.>   
+
+If the built-in message generation doesn't suit you, it is also possible to
+provide your own by specifying a code reference:
+
+ msgs  =>  \&my_msgs_callback
+
+This will be called as a L<Data::FormValidator::Results> method.  It may
+receive as arguments an additional hash reference of control parameters,
+corresponding to the key names in the usually used in the C<msgs> area of the
+profile. You can ignore this information if you'd like. 
+
+If you have an alternative error message handler you'd like to share, 
+stick in the C<Data::FormValidator::ErrMsgs> and upload it to CPAN. 
+
 =head2 debug
 
 This method is used to print details about what is going on to STDERR.
@@ -771,8 +803,9 @@ Deprecated, but supported
 
 You can pass more than one value into a constraint routine.  For that, the
 value of the constraint should be a hash reference. If you are creating your
-own routines, be sure to read the section labeled L<WRITING YOUR OWN VALIDATION
-ROUTINES>, in the Data::FormValidator::Constraints documentation.  It describes
+own routines, be sure to read the section labeled 
+L<WRITING YOUR OWN CONSTRAINT ROUTINES>, 
+in the Data::FormValidator::Constraints documentation.  It describes
 a newer and more flexible syntax. 
 
 Using the original syntax, one key should be named C<constraint> and should
@@ -870,6 +903,7 @@ sub _check_profile_syntax {
         untaint_all_constraints=> undef,
         validator_packages=> undef,
         untaint_constraint_fields=> undef,
+        untaint_regexp_map => undef,
         debug=> undef,
     );
 

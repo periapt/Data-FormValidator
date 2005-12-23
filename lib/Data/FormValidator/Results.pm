@@ -23,7 +23,7 @@ use vars qw/$AUTOLOAD $VERSION/;
 use overload
   'bool' => \&_bool_overload_based_on_success;
 
-$VERSION = 4.02;
+$VERSION = 4.10;
 
 =pod
 
@@ -45,7 +45,7 @@ Data::FormValidator::Results - results of form input validation.
     # Print the name of invalid fields
     if ( $results->has_invalid ) {
 	foreach my $f ( $results->invalid ) {
-	    print $f, " is invalid: ", $results->invalid( $f ) \n";
+	    print $f, " is invalid: ", $results->invalid( $f ), "\n";
 	}
     }
 
@@ -58,7 +58,7 @@ Data::FormValidator::Results - results of form input validation.
 
     # Print valid fields
     foreach my $f ( $results->valid() ) {
-	print $f, " =  ", $result->valid( $f ), "\n";
+        print $f, " =  ", $results->valid( $f ), "\n";
     }
 
 =head1 DESCRIPTION
@@ -213,7 +213,7 @@ sub _process {
 
     # Check if the presence of some fields makes other optional fields required.
     while ( my ( $field, $deps) = each %{$profile->{dependencies}} ) {
-        if ($valid{$field}) {
+        if (defined $valid{$field}) {
 			if (ref($deps) eq 'HASH') {
 				foreach my $key (keys %$deps) {
                     # Handle case of a key with a single value given as an arrayref
@@ -289,23 +289,6 @@ sub _process {
 		push @missings, $field unless ($enough_required_fields >= $num_fields_to_require);
 	}
 
-    #Decide which fields to untaint
-    my ($untaint_all, %untaint_hash);
-	if (defined($profile->{untaint_constraint_fields})) {
-		if (ref $profile->{untaint_constraint_fields} eq "ARRAY") {
-			foreach my $field (@{$profile->{untaint_constraint_fields}}) {
-				$untaint_hash{$field} = 1;
-			}
-		}
-		elsif ($valid{$profile->{untaint_constraint_fields}}) {
-			$untaint_hash{$profile->{untaint_constraint_fields}} = 1;
-		}
-	}
-    elsif ((defined($profile->{untaint_all_constraints}))
-	   && ($profile->{untaint_all_constraints} == 1)) {
-	   $untaint_all = 1;
-    }
-
     # add in the constraints from the regexp maps
     # We don't want to modify the profile, so we use a new variable.
 	$profile->{constraints} ||= {};
@@ -318,6 +301,45 @@ sub _process {
 	    %{ $profile->{constraint_methods} }, 	
 		_add_constraints_from_map($profile,'constraint_method',\%valid),
 	};
+
+    #Decide which fields to untaint
+    my ($untaint_all, %untaint_hash);
+    if (defined $profile->{untaint_regexp_map} or defined $profile->{untaint_constraint_fields} ) {
+        # first deal with untaint_constraint_fields
+        if (defined($profile->{untaint_constraint_fields})) {
+            if (ref $profile->{untaint_constraint_fields} eq "ARRAY") {
+                foreach my $field (@{$profile->{untaint_constraint_fields}}) {
+                    $untaint_hash{$field} = 1;
+                }
+            }
+            elsif ($valid{$profile->{untaint_constraint_fields}}) {
+                $untaint_hash{$profile->{untaint_constraint_fields}} = 1;
+            }
+        }
+
+        # now look at untaint_regexp_map
+        if(defined($profile->{untaint_regexp_map})) {
+            my @untaint_regexes;
+            if(ref $profile->{untaint_regexp_map} eq "ARRAY") {
+                @untaint_regexes = @{$profile->{untaint_regexp_map}};
+            }
+            else {
+                push(@untaint_regexes, $profile->{untaint_regexp_map});
+            }
+
+            foreach my $regex (@untaint_regexes) {
+                # look at both constraints and constraint_methods
+                foreach my $field (keys %$private_constraints, keys %$private_constraint_methods) {
+                    next if($untaint_hash{$field}); 
+                    $untaint_hash{$field} = 1 if( $field =~ $regex );
+                }
+            }
+        }
+    }
+    elsif ((defined($profile->{untaint_all_constraints}))
+	   && ($profile->{untaint_all_constraints} == 1)) {
+	   $untaint_all = 1;
+    }
 
 	$self->_check_constraints($private_constraints,\%valid,$untaint_all,\%untaint_hash);
 
@@ -519,11 +541,17 @@ This method returns a hash reference to error messages. The exact format
 is determined by parameters in the C<msgs> area of the validation profile,
 described in the L<Data::FormValidator> documentation.
 
-This method takes one possible parameter, a hash reference containing the same 
-options that you can define in the validation profile. This allows you to separate
-the controls for message display from the rest of the profile. While validation profiles
-may be different for every form, you may wish to format messages the same way
-across many projects.
+B<NOTE:> the C<msgs> parameter in the profile can take a code reference as a
+value, allowing complete control of how messages are generated. If such a code
+reference was provided there, it will be called here instead of the usual
+processing, described below. It will receive as arguments the L<Data::FormValidator::Results>
+object and a hash reference of control parameters.
+
+The hashref passed in should contain the same options that you can define in
+the validation profile. This allows you to separate the controls for message
+display from the rest of the profile. While validation profiles may be
+different for every form, you may wish to format messages the same way across
+many projects.
 
 Controls passed into the <msgs> method will be applied first, followed by ones
 applied in the profile. This allows you to keep the controls you pass to
@@ -532,6 +560,17 @@ C<msgs> as "global" and override them in a specific profile if needed.
 =cut
 
 sub msgs {
+  my $self = shift;
+  my $msgs = $self->{profile}{msgs} || {};
+  if ((ref $msgs eq 'CODE')) {
+    return $msgs->($self,@_);
+  } else {
+    return $self->_generate_msgs(@_);
+  }
+}
+
+
+sub _generate_msgs {
 	my $self = shift;
 	my $controls = shift || {};
 	if (defined $controls and ref $controls ne 'HASH') {
@@ -590,7 +629,9 @@ sub msgs {
 
 	my $msgs_ref = prefix_hash($profile{prefix},\%msgs);
 
-	$msgs_ref->{ $profile{any_errors} } = 1 if defined $profile{any_errors};
+    if (! $self->success) {
+    	$msgs_ref->{ $profile{any_errors} } = 1 if defined $profile{any_errors};
+    }
 
 	return $msgs_ref;
 
@@ -753,7 +794,7 @@ sub _create_sub_from_RE {
 }
 
 
-sub _error_msg_fmt ($$) {
+sub _error_msg_fmt  {
 	my ($fmt,$msg) = @_;
 	$fmt ||= 
 			'<span style="color:red;font-weight:bold"><span class="dfv_errors">* %s</span></span>';
@@ -1089,9 +1130,11 @@ sub _check_constraints {
 		next unless exists $valid->{$field};
 
 		my $is_constraint_list = 1 if (ref $constraint_list eq 'ARRAY');
-		my $untaint_this =  ($untaint_all || $untaint_href->{$field} || 0);
+		my $untaint_this = ($untaint_all || $untaint_href->{$field} || 0);
 
 		my @invalid_list;
+        # used to insure we only bother recording each failed constraint once
+		my %constraints_seen;
 		foreach my $constraint_spec (_arrayify($constraint_list)) {
 
 			# set current constraint field for use by get_current_constraint_field
@@ -1108,18 +1151,22 @@ sub _check_constraints {
             my %param_data = ( $self->_get_input_as_hash($self->get_input_data) , %$valid );
 			if ($is_value_list) {
 				foreach (my $i = 0; $i < scalar @{ $valid->{$field}} ; $i++) {
-					my @params = $self->_constraint_input_build($c,$valid->{$field}->[$i],\%param_data);
+                    if( !exists $constraints_seen{\$c} ) {
 
-					# set current constraint field for use by get_current_constraint_value
-					$self->{__CURRENT_CONSTRAINT_VALUE} = $valid->{$field}->[$i];
+                        my @params = $self->_constraint_input_build($c,$valid->{$field}->[$i],\%param_data);
 
-					my ($match,$failed) = $self->_constraint_check_match($c,\@params,$untaint_this);
-					if ($failed->{failed}) {
-						push @invalid_list, $failed;
-					}
-					else {
-						 $valid->{$field}->[$i] = $match if $untaint_this;
-					}
+                        # set current constraint field for use by get_current_constraint_value
+                        $self->{__CURRENT_CONSTRAINT_VALUE} = $valid->{$field}->[$i];
+
+                        my ($match,$failed) = $self->_constraint_check_match($c,\@params,$untaint_this);
+                        if ($failed->{failed}) {
+                            push @invalid_list, $failed;
+                            $constraints_seen{\$c} = 1;
+                        }
+                        else {
+                            $valid->{$field}->[$i] = $match if $untaint_this;
+                        }
+                    }
 				}
 			}
 			else {

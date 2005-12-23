@@ -347,12 +347,12 @@ INPUT PROFILE SPECIFICATION
 
          my_zipcode_field   => qr/^\d{5}$/, # match exactly 5 digits
 
-        If this field is named in the "untaint_constraint_fields", or
-        "untaint_all_constraints" is effective, be aware of the following:
-        If you write your own regular expressions and only match part of the
-        string then you'll only get part of the string in the valid hash. It
-        is a good idea to write you own constraints like /^regex$/. That way
-        you match the whole string.
+        If this field is named in "untaint_constraint_fields" or
+        "untaint_regexp_map", or "untaint_all_constraints" is effective, be
+        aware of the following: If you write your own regular expressions
+        and only match part of the string then you'll only get part of the
+        string in the valid hash. It is a good idea to write you own
+        constraints like /^regex$/. That way you match the whole string.
 
     o   a subroutine reference, to supply custom code
 
@@ -416,7 +416,8 @@ INPUT PROFILE SPECIFICATION
     See "WRITING YOUR OWN CONSTRAINT ROUTINES" in the
     Data::FormValidator::Constraints documention for more information.
 
-    This is overridden by "untaint_constraint_fields"
+    This is overridden by "untaint_constraint_fields" and
+    "untaint_regexp_map".
 
   untaint_constraint_fields
      untaint_constraint_fields => [qw(zipcode state)],
@@ -425,6 +426,19 @@ INPUT PROFILE SPECIFICATION
     constraint(s). This can be set to a single field name or an array
     reference of field names. The untainted data will be returned in the
     valid hash.
+
+    This overrides the untaint_all_constraints flag.
+
+  untaint_regexp_map
+     untaint_regexp_map => [qr/some_field_\d/],
+
+    Specifies that certain fields will be untained if they pass their
+    constraints and match one of the regular expressions supplied. This can
+    be set to a single regex, or an array reference of regexes. The
+    untainted data will be returned in the valid hash.
+
+    The above example would untaint the fields named "some_field_1", and
+    "some_field_2" but not "some_field".
 
     This overrides the untaint_all_constraints flag.
 
@@ -515,6 +529,23 @@ INPUT PROFILE SPECIFICATION
     The hash that's prepared can be retrieved through the "msgs" method
     described in the Data::FormValidator::Results documentation.
 
+  msgs - callback
+    *This is a new feature. While it expected to be forward-compatible, it
+    hasn't yet received the testing the rest of the API has.*
+
+    If the built-in message generation doesn't suit you, it is also possible
+    to provide your own by specifying a code reference:
+
+     msgs  =>  \&my_msgs_callback
+
+    This will be called as a Data::FormValidator::Results method. It may
+    receive as arguments an additional hash reference of control parameters,
+    corresponding to the key names in the usually used in the "msgs" area of
+    the profile. You can ignore this information if you'd like.
+
+    If you have an alternative error message handler you'd like to share,
+    stick in the "Data::FormValidator::ErrMsgs" and upload it to CPAN.
+
   debug
     This method is used to print details about what is going on to STDERR.
 
@@ -549,7 +580,7 @@ VALIDATING INPUT BASED ON MULTIPLE FIELDS
     You can pass more than one value into a constraint routine. For that,
     the value of the constraint should be a hash reference. If you are
     creating your own routines, be sure to read the section labeled "WRITING
-    YOUR OWN VALIDATION ROUTINES", in the Data::FormValidator::Constraints
+    YOUR OWN CONSTRAINT ROUTINES", in the Data::FormValidator::Constraints
     documentation. It describes a newer and more flexible syntax.
 
     Using the original syntax, one key should be named "constraint" and

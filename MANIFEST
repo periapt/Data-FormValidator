@@ -36,12 +36,14 @@ t/28_defaults_for_new.t
 t/30_filter_definedness.t
 t/ValidatorPackagesTest1.pm
 t/ValidatorPackagesTest2.pm
+t/any_errors.t
 t/check_profile_syntax.t
 t/constraint_method.t
 t/constraint_regexp_map_profile_reuse.t
 t/constraints_builtin.t
 t/constraints_builtin_closure.t
 t/constraints_factory.t
+t/constraints_invalid_once_only.t
 t/constraints_reuse.t
 t/dates.t
 t/dates_closure.t

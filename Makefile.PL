@@ -5,7 +5,7 @@ WriteMakefile
           'NAME' => 'Data::FormValidator',
           'VERSION_FROM' => 'lib/Data/FormValidator.pm',
           'PREREQ_PM' => {
-                           'Date::Calc' => '0',
+                           'Date::Calc' => '5',
                            'File::MMagic' => '1.17',
                            'Image::Size' => '0',
                            'MIME::Types' => '1.005',
