@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '4.12';
+$VERSION = '4.13';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -239,7 +239,7 @@ want by name later with C<check()>. Here's an example:
 
  my $dfv = Data::FormValidator->new({
     profile_1 => { # usual profile definition here },
-    profile_1 => { # another profile definition },
+    profile_2 => { # another profile definition },
  });
 
 

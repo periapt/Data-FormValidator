@@ -62,6 +62,7 @@ t/regexp_common.t
 t/regexp_common_closure.t
 t/results_success.t
 t/simple.t
+t/tt_and_overload.t
 t/undefined_arrayref.t
 t/unknown.t
 t/untaint.pl
