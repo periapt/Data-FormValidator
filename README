@@ -31,8 +31,8 @@ VALIDATING INPUT
      my $results = Data::FormValidator->check(\%input_hash, \%dfv_profile);
 
     "check" is the recommended method to use to validate forms. It returns
-    it's results as a Data::FormValidator::Results object. A deprecated
-    method "validate" is also available, returning it's results as an array
+    its results as a Data::FormValidator::Results object. A deprecated
+    method "validate" is also available, returning its results as an array
     described below.
 
      use Data::FormValidator;
@@ -314,7 +314,7 @@ INPUT PROFILE SPECIFICATION
     match a regular expression.
 
   constraint_methods
-     use Data::FormValidator::Constraints (qw:closures);
+     use Data::FormValidator::Constraints qw(:closures);
 
      constraint_methods => {
         cc_no      => cc_number({fields => ['cc_type']}),

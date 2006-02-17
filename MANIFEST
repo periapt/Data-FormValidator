@@ -45,6 +45,7 @@ t/constraints_builtin_closure.t
 t/constraints_factory.t
 t/constraints_invalid_once_only.t
 t/constraints_reuse.t
+t/credit_card.t
 t/dates.t
 t/dates_closure.t
 t/dependency_groups.t

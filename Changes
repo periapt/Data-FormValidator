@@ -1,3 +1,9 @@
+4.14 Fri Feb 17 08:59:40 EST 2006
+    [ENHANCEMENTS] 
+    - Consider a field with only a null character to be invalid  (Jamie Krasnoo)
+
+    [BUG FIXES]
+    - Fix bug in cc_number constraint, which was only present when used as a "constraint_method". (Evan A. Zacks)
 
 4.13
     [BUG FIXES]

@@ -23,7 +23,7 @@ package Data::FormValidator::Constraints;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = 4.02;
+$VERSION = 4.14;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -428,16 +428,24 @@ CHECK IF THERE IS AN ACCOUNT ASSOCIATED WITH THE NUMBER.
 # This one is taken from the contributed program to 
 # MiniVend by Bruce Albrecht
 
+# XXX raise exception on bad/missing params?
 sub cc_number {
-	my $dfv = shift;
-	my $attrs = pop; 
-	my $data = $dfv->get_input_data;
+    my $attrs = shift; 
+    return undef unless $attrs && ref($attrs) eq 'HASH'
+      && exists $attrs->{fields} && ref($attrs->{fields}) eq 'ARRAY';
 
-	my ($cc_type_field) = @{ $attrs->{fields} };
-	return match_cc_number( 
-		$dfv->get_current_constraint_value,
-		$data->{$cc_type_field}
-	);
+    my ($cc_type_field) = @{ $attrs->{fields} };
+    return undef unless $cc_type_field;
+
+    return sub {
+        my $dfv = shift;
+        my $data = $dfv->get_input_data;
+
+        return match_cc_number( 
+            $dfv->get_current_constraint_value,
+            $data->{$cc_type_field}
+        );
+    };
 }
 
 sub match_cc_number {
@@ -638,7 +646,7 @@ This is the current recommended way to write constraints. See also L<Old School
 Constraints>.
 
 The most flexible way to create constraints to use closures-- a normal seeming
-outer subroutine which returins a customized DFV method subroutine as a result.
+outer subroutine which returns a customized DFV method subroutine as a result.
 It's easy to do. These "constraint methods" can be named whatever you like, and
 imported normally into the name space where the profile is located. 
 
@@ -777,7 +785,7 @@ B<Example>:
 
  my $value = $self->get_current_constraint_name;
 
-This is useful for building a constraint on the fly based on it's name.
+This is useful for building a constraint on the fly based on its name.
 It's used internally as part of the interface to the L<Regexp::Commmon>
 regular expressions.
 
