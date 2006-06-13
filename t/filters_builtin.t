@@ -1,5 +1,14 @@
 use Test::More qw/no_plan/;
 use Data::FormValidator::Filters (qw/:filters/);
+use strict;
+
+{ 
+    my $comma_splitter = FV_split(',');
+    is_deeply( $comma_splitter->('a,b'), [qw/a b/], "FV_split with two values");
+    is_deeply( $comma_splitter->('a'), [qw/a/], "FV_split with one value");
+    is_deeply( $comma_splitter->(),undef, "FV_split with no values");
+}
+
 
 is( filter_dollars('There is $0.11e money in here somewhere'),
    '0.11', 
@@ -17,11 +26,11 @@ TODO: {
 
     is( filter_pos_integer('a9+'),
         '9', 
-        "filter_pos_integer should car which side a + is on.");
+        "filter_pos_integer should care which side a + is on.");
 
     is( filter_integer('a9+'),
         '9', 
-        "filter_integer should car which side a + is on.");
+        "filter_integer should care which side a + is on.");
 
     is( filter_decimal('1,000.23'),
         '1000.23', 

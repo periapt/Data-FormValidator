@@ -51,6 +51,7 @@ t/dates_closure.t
 t/dependency_groups.t
 t/filter_constraints.t
 t/filters_builtin.t
+t/filters_shouldnt_modify.t
 t/get_input_data.t
 t/missing_optional.t
 t/msgs.t

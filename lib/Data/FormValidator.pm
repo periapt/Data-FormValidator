@@ -31,7 +31,7 @@ use Data::FormValidator::Constraints (qw/:validators :matchers/);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '4.14';
+$VERSION = '4.20';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -492,9 +492,9 @@ This can be the name of a built-in filter
 (trim,digit,etc) or an anonymous subroutine which should take one parameter, 
 the field value and return the (possibly) modified value.
 
-Filters modify the data, so use them carefully. 
+Filters modify the data returned through the results object, so use them carefully. 
 
-See Data::FormValidator::Filters for details on the built-in filters.
+See L<Data::FormValidator::Filters> for details on the built-in filters.
 
 =head2 field_filters
 
@@ -1180,17 +1180,29 @@ Albrecht to the MiniVend program.
 
 =head1 BUGS
 
+Bug reports and patches are welcome. Reports which include a failing Test::More
+style test are helpful will receive priority. 
+
 L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Data-FormValidator> 
 
 =head1 CONTRIBUTING
 
-Patches, questions and feedback are welcome. This project is managed using
-the darcs source control system ( http://www.darcs.net/ ). My darcs archive is here:
+This project is managed using the darcs source control system (
+http://www.darcs.net/ ). My darcs archive is here:
 http://mark.stosberg.com/darcs_hive/dfv/
+
+B<Support Mailing List>
+ 
+If you have any questions, comments, or feature suggestions, post them to the
+support mailing list!  To join the mailing list, visit
+
+L<http://lists.sourceforge.net/lists/listinfo/cascade-dataform>
+
+Messages about DFV sent directly to the maintainer may be redirected here. 
 
 =head1 AUTHOR
 
-Parts Copyright 2001-2003 by Mark Stosberg <markstos@cpan.org>, (Current Maintainer)
+Parts Copyright 2001-2006 by Mark Stosberg <mark at summersault.com>, (Current Maintainer)
 
 Copyright (c) 1999 Francis J. Lacoste and iNsu Innovations Inc.  All rights reserved.
 (Original Author)
@@ -1198,12 +1210,6 @@ Copyright (c) 1999 Francis J. Lacoste and iNsu Innovations Inc.  All rights rese
 Parts Copyright 1996-1999 by Michael J. Heins <mike@heins.net>
 
 Parts Copyright 1996-1999 by Bruce Albrecht  <bruce.albrecht@seag.fingerhut.com>
-
-B<Support Mailing List>
- 
-If you have any questions, comments, bug reports or feature suggestions,
-post them to the support mailing list!  To join the mailing list, visit 
-L<http://lists.sourceforge.net/lists/listinfo/cascade-dataform>
 
 =head1 LICENSE 
 
