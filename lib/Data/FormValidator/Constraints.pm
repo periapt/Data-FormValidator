@@ -23,7 +23,7 @@ package Data::FormValidator::Constraints;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = 4.14;
+$VERSION = 4.21_01;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -77,6 +77,9 @@ BEGIN {
     @EXPORT_OK = (
         @closures,
         qw(
+        FV_length_between
+        FV_min_length
+        FV_max_length
         valid_american_phone
         valid_cc_exp
         valid_cc_number
@@ -162,7 +165,8 @@ BEGIN {
 
                         no strict "refs";
                         my $re = &$sub(-keep=>1,@params);
-                        return ($dfv->get_current_constraint_value =~ qr/^$re$/) ? $1 : undef; 
+                        my ($match) = ($dfv->get_current_constraint_value =~ qr/^($re)$/);
+                        return $dfv->untainted_constraint_value($match);
                     }
                 }
             }
@@ -224,11 +228,76 @@ sub AUTOLOAD {
     }
 }
 
-=pod
+=head2 FV_length_between(1,23) 
 
-=over 
+=head2 FV_max_length(23)
 
-=item email
+=head2 FV_min_length(1)
+
+  use Data::FormValidator::Constraints qw(
+    FV_length_between
+    FV_min_length
+    FV_max_length
+  );
+
+  constraint_methods => {
+
+    # specify a min and max, inclusive
+    last_name        => FV_length_between(1,23),
+
+  }
+
+Specify a length constraint for a field. 
+
+These constraints have a different naming convention because they are higher-order
+functions. They take input and return a code reference to a standard constraint
+method. A constraint name of C<length_between>, C<min_length>, or C<max_length> will be set,
+corresponding to the function name you choose. 
+
+The checks are all inclusive, so a max length of '100' will allow the length 100. 
+
+This constraint I<will> untaint your data if you have untainting turned on. However,
+a length check alone may not be enough to insure the safety of the data you are receiving.
+Using additional constraints to check the data is encouraged. 
+
+=cut
+
+sub FV_length_between {
+    my ($min,$max) = @_;
+    if (not (defined $min and defined $max)) {
+            croak "min and max are required";
+    }
+    return sub {
+        my ($dfv,$value) = @_;
+        $dfv->name_this('length_between');
+        my ($match) = ($value =~ m/^(.{$min,$max})$/);
+        return $dfv->untainted_constraint_value($match);
+    }
+}
+
+sub FV_max_length {
+    my ($max) = @_;
+    croak "max is required" unless defined $max;
+    return sub {
+        my ($dfv,$value) = @_;
+        $dfv->name_this('max_length');
+        my ($match) = ($value =~ m/^(.{0,$max}$)/);
+        return $dfv->untainted_constraint_value($match);
+    }
+}
+
+sub FV_min_length {
+    my ($min) = @_;
+    croak "min is required" unless defined $min;
+    return sub {
+        my ($dfv,$value) = @_;
+        $dfv->name_this('min_length');
+        my ($match) = ($value =~ m/^(.{$min,})$/);
+        return $dfv->untainted_constraint_value($match);
+    }
+}
+
+=head2 email
 
 Checks if the email LOOKS LIKE an email address. This should be sufficient
 99% of the time. 
@@ -263,9 +332,7 @@ my $province = <<EOF;
 AB BC MB NB NF NL NS NT NU ON PE QC SK YT YK
 EOF
 
-=pod
-
-=item state_or_province
+=head2 state_or_province
 
 This one checks if the input correspond to an american state or a canadian
 province.
@@ -282,12 +349,10 @@ sub match_state_or_province {
 	}
 }
 
-=pod
-
-=item state
+=head2 state
 
 This one checks if the input is a valid two letter abbreviation of an 
-american state.
+American state.
 
 =cut
 
@@ -299,11 +364,9 @@ sub match_state {
     else { return undef; }
 }
 
-=pod
+=head2 province
 
-=item province
-
-This checks if the input is a two letter canadian province
+This checks if the input is a two letter Canadian province
 abbreviation.
 
 =cut
@@ -316,12 +379,10 @@ sub match_province {
     else { return undef; }
 }
 
-=pod
+=head2 zip_or_postcode
 
-=item zip_or_postcode
-
-This constraints checks if the input is an american zipcode or a
-canadian postal code.
+This constraints checks if the input is an American zipcode or a
+Canadian postal code.
 
 =cut
 
@@ -336,7 +397,7 @@ sub match_zip_or_postcode {
 }
 =pod
 
-=item postcode
+=head2 postcode
 
 This constraints checks if the input is a valid Canadian postal code.
 
@@ -351,9 +412,7 @@ sub match_postcode {
     else { return undef; }
 }
 
-=pod
-
-=item zip
+=head2 zip
 
 This input validator checks if the input is a valid american zipcode :
 5 digits followed by an optional mailbox number.
@@ -368,9 +427,7 @@ sub match_zip {
     else { return undef; }
 }
 
-=pod
-
-=item phone
+=head2 phone
 
 This one checks if the input looks like a phone number, (if it
 contains at least 6 digits.)
@@ -386,9 +443,7 @@ sub match_phone {
     else { return undef; }
 }
 
-=pod
-
-=item american_phone
+=head2 american_phone
 
 This constraints checks if the number is a possible North American style
 of phone number : (XXX) XXX-XXXX. It has to contains 7 or more digits.
@@ -405,9 +460,7 @@ sub match_american_phone {
 }
 
 
-=pod
-
-=item cc_number
+=head2 cc_number
 
 This constraint references the value of a credit card type field.
 
@@ -499,9 +552,7 @@ sub match_cc_number {
     }
 }
 
-=pod
-
-=item cc_exp
+=head2 cc_exp
 
 This one checks if the input is in the format MM/YY or MM/YYYY and if
 the MM part is a valid month (1-12) and if that date is not in the past.
@@ -528,9 +579,7 @@ sub match_cc_exp {
     return "$matched_month/$matched_year";
 }
 
-=pod
-
-=item cc_type
+=head2 cc_type
 
 This one checks if the input field starts by M(asterCard), V(isa),
 A(merican express) or D(iscovery).
@@ -543,11 +592,12 @@ sub match_cc_type {
     else { return undef; }
 }
 
-=pod
+=head2 ip_address
 
-=item ip_address
-
-This checks if the input is formatted like an IP address (v4)
+This checks if the input is formatted like a dotted decimal IP address (v4).
+For other kinds of IP address method, See L<Regexp::Common::net> which provides 
+several more options. L<REGEXP::COMMON SUPPORT> explains how we easily integrate
+with Regexp::Common. 
 
 =cut
 
@@ -569,10 +619,6 @@ sub match_ip_address {
 1;
 
 __END__
-
-=pod
-
-=back
 
 =head1 REGEXP::COMMON SUPPORT
 
@@ -738,9 +784,7 @@ with C<constraint_regexp_map>.
 A few useful methods to use on the Data::FormValidator::Results object are
 available to you to use inside of your routine.
 
-=over 4
-
-=item get_input_data()
+=head3 get_input_data()
 
 Returns the raw input data. This may be a CGI object if that's what 
 was used in the constraint routine. 
@@ -753,7 +797,7 @@ B<Examples:>
  # tamed to be a hashref, if it wasn't already
  my $data = $self->get_input_data( as_hashref => 1 );
 
-=item get_current_constraint_field
+=head3 get_current_constraint_field()
 
 Returns the name of the current field being tested in the constraint.
 
@@ -766,7 +810,7 @@ and allows multi-valued constraints to be used with C<constraint_regexp_map>.
 
 For complete examples of multi-valued constraints, see L<Data::FormValidator::Constraints::Upload>
 
-=item get_current_constraint_value
+=head3 get_current_constraint_value()
 
 Returns the name of the current value being tested in the constraint.
 
@@ -777,7 +821,7 @@ B<Example>:
 This reduces the number of parameters that need to be passed into the routine
 and allows multi-valued constraints to be used with C<constraint_regexp_map>.
 
-=item get_current_constraint_name
+=head3 get_current_constraint_name()
 
 Returns the name of the current constraint being applied
 
@@ -789,8 +833,17 @@ This is useful for building a constraint on the fly based on its name.
 It's used internally as part of the interface to the L<Regexp::Commmon>
 regular expressions.
 
-=item name_this
-=item set_current_constraint_name
+=head3 untainted_constaint_value()
+
+   return $dfv->untainted_constraint_value($match);
+
+If you have written a constraint which untaints, use this method to return the
+untainted result. It will prepare the right result whether the user has requested
+untainting or not. 
+
+=head3 name_this()
+
+=head3 set_current_constraint_name()
 
 Sets the name of the current constraint being applied.
 
@@ -812,8 +865,6 @@ that will be used later. See Data::FormValidator::Constraints::Upload for an
 example.
 
 C<name_this> is a provided as a shorter synonym.
-
-=back
 
 The C<meta()> method may also be useful to communicate meta data that
 may have been found. See L<Data::FormValidator::Results> for documentation
@@ -846,16 +897,31 @@ and the names were given as strings, like this:
 
 =head1 SEE ALSO
 
-L<Data::FormValidator::Constraints::Upload> - validate the bytes, format and dimensions of file uploads,
-L<Data::FormValidator::Constraints::DateTime> - 
-  A newer DateTime constraint module. May save you a step of tranforming the date into
-  a more useful format after it's validated. 
-L<Data::FormValidator::Constraints::Dates> - the original DFV date constraint module
-L<Regexp::Common> -- lost of useful regular expressions to choose from!
+=head2 Constraints available in other modules
 
-L<Data::FormValidator>
-L<Data::FormValidator::Filters>
-L<Data::FormValidator::ConstraintsFactory>
+=over
+
+=item L<Data::FormValidator::Constraints::Upload> - validate the bytes, format and dimensions of file uploads
+
+=item L<Data::FormValidator::Constraints::DateTime> - A newer DateTime constraint module. May save you a step of tranforming the date into a more useful format after it's validated. 
+
+=item L<Data::FormValidator::Constraints::Dates> - the original DFV date constraint module. Try the newer one first!
+
+=item L<Data::FormValidator::Constraints::Japanese> - Japan-specific constraints
+
+=back
+
+=head2 Related modules in this package
+
+=over
+
+=item L<Data::FormValidator::Filters> - transform data before constraints are applied
+
+=item L<Data::FormValidator::ConstraintsFactory> - This is a historical collection of constraints that suffer from cumbersome names. They are worth reviewing though-- C<make_and_constraint> will allow to validate against a list of constraints and shortcircuit if the first one fails. That's perfect if the second constraint depends on the first one having passed.
+
+=item L<Data::FormValidator>
+
+=back
 
 =head1 CREDITS
 

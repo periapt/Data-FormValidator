@@ -1,3 +1,24 @@
+    [ENHANCEMENTS]
+    - A new method for constraint writers has been added: untainted_constraint_value().    
+      If you have written a constraint which untaints, use this method to return the
+      untainted result. It will prepare the right result whether the user has requested
+      untainting or not. (Mark Stosberg)
+
+    - New built-in constraints added:
+
+        FV_min_length(3),
+        FV_max_length(100),
+        FV_length_between(3,100),
+
+        These constraints can optionally perform untainting. (Mark Stosberg)
+
+    [BUG FIXES]
+    - Regexp::Common regular expressions which accepted zero as a valid input would
+      have wrongly failed their constraints unless untainting was enabled. (Mark Stosberg)
+
+    [INTERNALS]
+    - Improved documentation for built-in constraints. (Mark Stosberg)
+
 4.20 Mon Jun 12 20:44:36 EDT 2006
     [ENHANCEMENTS]
     - Documentation in Data::FormValidator::Filters has been improved. (Mark Stosberg}
