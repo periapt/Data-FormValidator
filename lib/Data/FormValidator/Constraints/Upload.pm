@@ -28,7 +28,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 	image_min_dimensions
 );
 
-$VERSION = 1.1;
+$VERSION = 1.2;
 
 sub file_format {
 	my %params = @_;
@@ -100,6 +100,8 @@ sub valid_file_format {
 	## only use filehandle bits for magic data
 	  $fm_mt = $mm->checktype_filehandle($fh) || 
 	    (warn "$0: can't get filehandle for field named $field" and return undef);
+        # Work around a bug in File::MMagic (RT#12074)
+        seek($fh,0,0);
 
 	## fetch mime type universally (or close) 
 	my $uploaded_mt = _get_upload_mime_type($self);
