@@ -23,7 +23,7 @@ package Data::FormValidator::Constraints;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = 4.30;
+$VERSION = 4.40;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -74,12 +74,17 @@ BEGIN {
         }
     }
 
-    @EXPORT_OK = (
-        @closures,
-        qw(
+    my @FVs = (qw/
         FV_length_between
         FV_min_length
         FV_max_length
+        FV_eq_with
+    /);
+
+    @EXPORT_OK = (
+        @closures,
+        @FVs,
+        qw(
         valid_american_phone
         valid_cc_exp
         valid_cc_number
@@ -111,7 +116,7 @@ BEGIN {
     %EXPORT_TAGS = (
         # regexp common is correctly empty here, because we handle the case on the fly with the import function below. 
         regexp_common => [],
-        closures => \@closures, 
+        closures => [ @closures, @FVs ], 
         validators => [qw/
             valid_american_phone
             valid_cc_exp
@@ -296,6 +301,37 @@ sub FV_min_length {
         return $dfv->untainted_constraint_value($match);
     }
 }
+
+=head2 FV_eq_with 
+
+  use Data::FormValidator::Constraints qw( FV_eq_with );
+
+  constraint_methods => {  
+    password  => FV_eq_with('password_confirm'),
+  }
+
+Compares the current field to another field.
+A constraint name of C<eq_with> will be set.
+
+=cut
+
+sub FV_eq_with {
+    my ($other_field) = @_;
+    return sub {
+        my $dfv = shift;
+        $dfv->name_this('eq_with');
+
+        my $curr_val  = $dfv->get_current_constraint_value;
+
+        my $data = $dfv->get_input_data;
+        # Sometimes the data comes through both ways...
+        my $other_val = (ref $data->{$other_field}) ? $data->{$other_field}[0] : $data->{$other_field};
+
+        return ($curr_val eq $other_val);
+    }
+
+}
+
 
 =head2 email
 
