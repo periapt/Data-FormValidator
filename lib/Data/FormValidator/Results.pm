@@ -17,14 +17,14 @@ package Data::FormValidator::Results;
 
 use Carp;
 use Symbol;
-use Data::FormValidator::Filters qw/:filters/;
-use Data::FormValidator::Constraints (qw/:validators :matchers/);
+use Data::FormValidator::Filters ':filters';
+use Data::FormValidator::Constraints qw(:validators :matchers);
 use vars qw/$AUTOLOAD $VERSION/;
 use overload
   'bool' => \&_bool_overload_based_on_success,
   fallback => 1;
 
-$VERSION = 4.30;
+$VERSION = 4.49_01;
 
 =pod
 
@@ -262,8 +262,22 @@ sub _process {
 		delete $valid{$field};
 	}
 
+    # Add defaults from defaults_regexp_map
+    my %private_defaults;
+    my @all_possible = keys %optional, keys %required, keys %require_some;
+    while ( my ($re,$value) = each %{$profile->{defaults_regexp_map}} ) {
+        # We only add defaults for known fields. 
+        for (@all_possible) {
+            $private_defaults{$_} = $value if m/$re/;
+        }
+    }
+
     # Fill defaults
-    while ( my ($field,$value) = each %{$profile->{defaults}} ) {
+    my %combined_defaults = ( 
+        %private_defaults, 
+        %{ $profile->{defaults} || {} } 
+    );
+    while ( my ($field,$value) = each %combined_defaults ) {
         unless(exists $valid{$field}) {
             if (ref($value) && ref($value) eq "CODE") {
                 $valid{$field} = $value->($self);

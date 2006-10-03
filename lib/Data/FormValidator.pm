@@ -26,12 +26,12 @@ package Data::FormValidator;
 use 5.005; # for "qr" support, which isn't strictly required. 
 
 use Data::FormValidator::Results;
-use Data::FormValidator::Filters (qw/:filters/);
-use Data::FormValidator::Constraints (qw/:validators :matchers/);
+use Data::FormValidator::Filters ':filters';
+use Data::FormValidator::Constraints qw(:validators :matchers);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '4.40';
+$VERSION = '4.49_1';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -480,6 +480,19 @@ object as the only parameter.
 The defaults are set shortly before the constraints are applied, and
 will be returned with the other valid data.
 
+=head2 defaults_regexp_map
+
+  defaults_regexp_map => {
+      qr/^opt_/ => 1,
+  },
+
+This is a hash reference that maps  regular expressions to default values to
+use for matching optional or required fields. 
+
+It's useful if you have generated many checkbox fields with the similiar names.
+Since checkbox fields submit nothing at all when they are not checked, it's
+useful to set defaults for them.
+
 =head2 filters
 
  # trim leading and trailing whitespace on all fields
@@ -883,28 +896,29 @@ sub _check_profile_syntax {
         die "Invalid input profile: needs to be a hash reference\n";
 
     my %valid_profile_keys = (
-		constraint_methods 	          => undef,
-		constraint_method_regexp_map  => undef,
-        constraint_regexp_map=> undef,
-        constraints=> undef,
-        defaults=> undef,
-        dependencies=> undef,
-        dependency_groups=> undef,
-        field_filter_regexp_map=> undef,
-        field_filters=> undef,
-        filters=> undef,
-        missing_optional_valid=> undef,
-        msgs=> undef,
-        optional=> undef,
-        optional_regexp=> undef,
-        require_some=> undef,
-        required=> undef,
-        required_regexp => undef,
-        untaint_all_constraints=> undef,
-        validator_packages=> undef,
-        untaint_constraint_fields=> undef,
-        untaint_regexp_map => undef,
-        debug=> undef,
+		constraint_methods           => undef,
+		constraint_method_regexp_map => undef,
+		constraint_regexp_map        => undef,
+		constraints                  => undef,
+		defaults                     => undef,
+		defaults_regexp_map          => undef,
+		dependencies                 => undef,
+		dependency_groups            => undef,
+		field_filter_regexp_map      => undef,
+		field_filters                => undef,
+		filters                      => undef,
+		missing_optional_valid       => undef,
+		msgs                         => undef,
+		optional                     => undef,
+		optional_regexp              => undef,
+		require_some                 => undef,
+		required                     => undef,
+		required_regexp              => undef,
+		untaint_all_constraints      => undef,
+		validator_packages           => undef,
+		untaint_constraint_fields    => undef,
+		untaint_regexp_map           => undef,
+		debug                        => undef,
     );
 
     # If any of the keys in the profile are not listed as 
@@ -920,10 +934,10 @@ sub _check_profile_syntax {
     }
 
     my %valid_constraint_hash_keys = (
-        constraint => undef,
+        constraint        => undef,
         constraint_method => undef,
-        name => undef,
-        params => undef,
+        name              => undef,
+        params            => undef,
     );
 
     my @constraint_hashrefs = grep { ref $_ eq 'HASH' } values %{ $profile->{constraints} } 
@@ -1217,4 +1231,5 @@ This program is free software; you can redistribute it and/or modify
 it under the terms as perl itself.
 
 =cut
+
 
