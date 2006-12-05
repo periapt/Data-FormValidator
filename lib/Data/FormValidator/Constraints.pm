@@ -23,7 +23,7 @@ package Data::FormValidator::Constraints;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = 4.40;
+$VERSION = 4.50;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -193,7 +193,7 @@ Data::FormValidator::Constraints - Basic sets of constraints on input profile.
 
 =head1 SYNOPSIS
 
- use Data::FormValidator::Constraints qw(:all);
+ use Data::FormValidator::Constraints qw(:closures);
 
 In an Data::FormValidator profile:
 
@@ -323,7 +323,7 @@ sub FV_eq_with {
 
         my $curr_val  = $dfv->get_current_constraint_value;
 
-        my $data = $dfv->get_input_data;
+        my $data = $dfv->get_filtered_data;
         # Sometimes the data comes through both ways...
         my $other_val = (ref $data->{$other_field}) ? $data->{$other_field}[0] : $data->{$other_field};
 
@@ -528,7 +528,7 @@ sub cc_number {
 
     return sub {
         my $dfv = shift;
-        my $data = $dfv->get_input_data;
+        my $data = $dfv->get_filtered_data;
 
         return match_cc_number( 
             $dfv->get_current_constraint_value,
@@ -682,10 +682,10 @@ than to Data::FormValidator.
 
 =head1 PROCEDURAL INTERFACE
 
-You may also call these functions directly through the procedural
-interface by either importing them directly or importing the whole
-I<:validators> group. This is useful if you want to use the built-in validators
-out of the usual profile specification interface. 
+You may also call these functions directly through the procedural interface by
+either importing them directly or importing the whole I<:validators> group.
+This is useful if you want to use the built-in validators out of the usual
+profile specification interface. 
 
 
 For example, if you want to access the I<email> validator
@@ -768,7 +768,7 @@ Here's what the code might look like:
 		my $val = $dfv->get_current_constraint_value();
 
 		# get other data to refer to
-	    my $data = $dfv->get_input_data;
+	    my $data = $dfv->get_filtered_data;
 
 	    my $has_all_three = ($data->{personality} && $data->{smarts} && $data->{looks});
 		return ( ($val >= $min_cool) && ($val <= $max_cool) && $has_all_three );
@@ -833,6 +833,14 @@ B<Examples:>
  # tamed to be a hashref, if it wasn't already
  my $data = $self->get_input_data( as_hashref => 1 );
 
+=head3 get_filtered_data()
+
+ my $data = $self->get_filtered_data;
+
+Returns the filtered data as a hashref, regardless of whether
+it started out as a CGI.pm compatible object. Multiple values are 
+expressed as array references. 
+
 =head3 get_current_constraint_field()
 
 Returns the name of the current field being tested in the constraint.
@@ -869,7 +877,7 @@ This is useful for building a constraint on the fly based on its name.
 It's used internally as part of the interface to the L<Regexp::Commmon>
 regular expressions.
 
-=head3 untainted_constaint_value()
+=head3 untainted_constraint_value()
 
    return $dfv->untainted_constraint_value($match);
 
@@ -906,9 +914,9 @@ The C<meta()> method may also be useful to communicate meta data that
 may have been found. See L<Data::FormValidator::Results> for documentation
 of that method.
 
-=head1  BACKWARDS COMPATIBLITY
+=head1  BACKWARDS COMPATIBILITY
 
-Prior to Data::FormValidator 4.00, contraints were specified a bit differently.
+Prior to Data::FormValidator 4.00, constraints were specified a bit differently.
 This older style is still supported. 
 
 It was not necessary to explicitly load some constraints into your name space,
@@ -939,7 +947,7 @@ and the names were given as strings, like this:
 
 =item L<Data::FormValidator::Constraints::Upload> - validate the bytes, format and dimensions of file uploads
 
-=item L<Data::FormValidator::Constraints::DateTime> - A newer DateTime constraint module. May save you a step of tranforming the date into a more useful format after it's validated. 
+=item L<Data::FormValidator::Constraints::DateTime> - A newer DateTime constraint module. May save you a step of transforming the date into a more useful format after it's validated. 
 
 =item L<Data::FormValidator::Constraints::Dates> - the original DFV date constraint module. Try the newer one first!
 

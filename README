@@ -130,9 +130,9 @@ VALIDATING INPUT
         in the future.
 
         The exception here is definitions for your "msgs" key. You will
-        safely be able to define some defaults for this key and not have
-        them entirely clobbered just because "msgs" was defined in a
-        validation profile.
+        safely be able to define some defaults for the top level keys within
+        "msgs" and not have them clobbered just because "msgs" was defined
+        in a validation profile.
 
         One way to use this feature is to create your own sub-class that
         always provides your defaults to "new()".
@@ -281,9 +281,14 @@ INPUT PROFILE SPECIFICATION
     This is a hash reference that maps regular expressions to default values
     to use for matching optional or required fields.
 
-    It's useful if you have generated many checkbox fields with the similiar
+    It's useful if you have generated many checkbox fields with the similar
     names. Since checkbox fields submit nothing at all when they are not
     checked, it's useful to set defaults for them.
+
+    Note that it doesn't make sense to use a default for a field handled by
+    "optional_regexp" or "required_regexp". When the field is not submitted,
+    there is no way know that it should be optional or required, and thus
+    there's no way to know that a default should be set for it.
 
   filters
      # trim leading and trailing whitespace on all fields
@@ -349,7 +354,7 @@ INPUT PROFILE SPECIFICATION
 
         Example:
 
-         my_zipcode_field     => 'zip',
+         my_zipcode_field     => zip(),
 
         See Data::FormValidator::Constraints for the details of which
         built-in constraints that are available.
@@ -370,7 +375,7 @@ INPUT PROFILE SPECIFICATION
     o   a subroutine reference, to supply custom code
 
         This will check the input and return true or false depending on the
-        input's validity. By default, the constraint function recieves a
+        input's validity. By default, the constraint function receives a
         Data::FormValidator::Results object as its first argument, and the
         value to be validated as the second. To validate a field based more
         inputs than just the field itself, see "VALIDATING INPUT BASED ON
@@ -427,7 +432,7 @@ INPUT PROFILE SPECIFICATION
     that some constraint routines may not provide untainting.
 
     See "WRITING YOUR OWN CONSTRAINT ROUTINES" in the
-    Data::FormValidator::Constraints documention for more information.
+    Data::FormValidator::Constraints documentation for more information.
 
     This is overridden by "untaint_constraint_fields" and
     "untaint_regexp_map".
@@ -445,7 +450,7 @@ INPUT PROFILE SPECIFICATION
   untaint_regexp_map
      untaint_regexp_map => [qr/some_field_\d/],
 
-    Specifies that certain fields will be untained if they pass their
+    Specifies that certain fields will be untainted if they pass their
     constraints and match one of the regular expressions supplied. This can
     be set to a single regex, or an array reference of regexes. The
     untainted data will be returned in the valid hash.
@@ -468,7 +473,7 @@ INPUT PROFILE SPECIFICATION
 
   validator_packages
      # load all the constraints and filters from these modules
-     validator_packages => [qw(Data::FormValdidator::Constraints::Upload)],
+     validator_packages => [qw(Data::FormValidator::Constraints::Upload)],
 
     This key is used to define other packages which contain constraint
     routines or filters. Set this key to a single package name, or an
@@ -499,7 +504,7 @@ INPUT PROFILE SPECIFICATION
 
     The %s will be replaced with the message. The effect is that the message
     will appear in bold red with an asterisk before it. This style can be
-    overriden by simply defining "dfv_errors" appropriately in a style
+    overridden by simply defining "dfv_errors" appropriately in a style
     sheet, or by providing a new format string.
 
     Here's a more complex example that shows how to provide your own default
@@ -527,7 +532,7 @@ INPUT PROFILE SPECIFICATION
          # Error messages, keyed by constraint name
          # Your constraints must be named to use this.
          constraints => {
-                         'date_and_time' => 'Not a vaild time format',
+                         'date_and_time' => 'Not a valid time format',
                          # ...
          },
  
@@ -557,7 +562,8 @@ INPUT PROFILE SPECIFICATION
     the profile. You can ignore this information if you'd like.
 
     If you have an alternative error message handler you'd like to share,
-    stick in the "Data::FormValidator::ErrMsgs" and upload it to CPAN.
+    stick in the "Data::FormValidator::ErrMsgs" name space and upload it to
+    CPAN.
 
   debug
     This method is used to print details about what is going on to STDERR.
@@ -602,7 +608,7 @@ VALIDATING INPUT BASED ON MULTIPLE FIELDS
     the "params" key is a reference to an array of the other elements to use
     in the validation. If the element is a scalar, it is assumed to be a
     field name. The field is known to Data::FormValidator, the value will be
-    filtered through any defined filteres before it is passed in. If the
+    filtered through any defined filters before it is passed in. If the
     value is a reference, the reference is passed directly to the routine.
     Don't forget to include the name of the field to check in that list, if
     you are using this syntax.
@@ -620,7 +626,7 @@ MULTIPLE CONSTRAINTS
     this array can be any of the constraint types defined above.
 
     When using multiple constraints it is important to return the name of
-    the constraint that failed so you can distinquish between them. To do
+    the constraint that failed so you can distinguish between them. To do
     that, either use a named constraint, or use the hash ref method of
     defining a constraint and include a "name" key with a value set to the
     name of your constraint. Here's an example:
@@ -810,7 +816,7 @@ SEE ALSO
 
     Japanese: <http://perldoc.jp/docs/modules/>
 
-    Distributions which include Data::formValidator
+    Distributions which include Data::FormValidator
 
     FreeBSD includes a port named p5-Data-FormValidator
 

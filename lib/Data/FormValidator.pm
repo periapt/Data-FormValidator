@@ -19,19 +19,20 @@
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms same terms as perl itself.
-#
+
 
 package Data::FormValidator;
 
 use 5.005; # for "qr" support, which isn't strictly required. 
 
 use Data::FormValidator::Results;
+*_arrayify = \&Data::FormValidator::Results::_arrayify;
 use Data::FormValidator::Filters ':filters';
 use Data::FormValidator::Constraints qw(:validators :matchers);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '4.49_1';
+$VERSION = '4.50';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -274,9 +275,9 @@ validation profile will completely overwrite your default value.
 This means you can't define two keys for C<constraint_regexp_map> and expect
 they will always be there. This kind of feature may be added in the future.
 
-The exception here is definitions for your C<msgs> key. You will safely  
-be able to define some defaults for this key and not have them entirely clobbered 
-just because C<msgs> was defined in a validation profile.
+The exception here is definitions for your C<msgs> key. You will safely  be
+able to define some defaults for the top level keys within C<msgs> and not have
+them clobbered just because C<msgs> was defined in a validation profile.
 
 One way to use this feature is to create your own sub-class that always provides
 your defaults to C<new()>. 
@@ -489,9 +490,14 @@ will be returned with the other valid data.
 This is a hash reference that maps  regular expressions to default values to
 use for matching optional or required fields. 
 
-It's useful if you have generated many checkbox fields with the similiar names.
+It's useful if you have generated many checkbox fields with the similar names.
 Since checkbox fields submit nothing at all when they are not checked, it's
 useful to set defaults for them.
+
+Note that it doesn't make sense to use a default for a field handled by
+C<optional_regexp> or C<required_regexp>.  When the field is not submitted,
+there is no way know that it should be optional or required, and thus there's
+no way to know that a default should be set for it. 
 
 =head2 filters
 
@@ -562,7 +568,7 @@ A named constraint.
 
 B<Example>: 
 
- my_zipcode_field     => 'zip',
+ my_zipcode_field     => zip(),
 
 See L<Data::FormValidator::Constraints> for the details of which
 built-in constraints that are available.
@@ -587,7 +593,7 @@ write you own constraints like /^regex$/. That way you match the whole string.
 a subroutine reference, to supply custom code
 
 This will check the input and return true or false depending on the input's validity.
-By default, the constraint function recieves a L<Data::FormValidator::Results>
+By default, the constraint function receives a L<Data::FormValidator::Results>
 object as its first argument, and the value to be validated as the second.  To
 validate a field based more inputs than just the field itself, see 
 L<VALIDATING INPUT BASED ON MULTIPLE FIELDS>.
@@ -648,7 +654,7 @@ the pattern match used by the constraint.  Note that some constraint routines
 may not provide untainting.
 
 See L<WRITING YOUR OWN CONSTRAINT ROUTINES> in the Data::FormValidator::Constraints
-documention for more information.
+documentation for more information.
 
 This is overridden by C<untaint_constraint_fields> and C<untaint_regexp_map>.
 
@@ -666,7 +672,7 @@ This overrides the untaint_all_constraints flag.
 
  untaint_regexp_map => [qr/some_field_\d/],
 
-Specifies that certain fields will be untained if they pass their constraints
+Specifies that certain fields will be untainted if they pass their constraints
 and match one of the regular expressions supplied. This can be set to a single
 regex, or an array reference of regexes. The untainted data will be returned
 in the valid hash.
@@ -691,7 +697,7 @@ set back to "blank" may fail to get updated.
 =head2 validator_packages 
 
  # load all the constraints and filters from these modules
- validator_packages => [qw(Data::FormValdidator::Constraints::Upload)],
+ validator_packages => [qw(Data::FormValidator::Constraints::Upload)],
 
 This key is used to define other packages which contain constraint routines or
 filters.  Set this key to a single package name, or an arrayref of several. All
@@ -720,7 +726,7 @@ That formatting is as followings:
     <span style="color:red;font-weight:bold"><span class="dfv_errors">* %s</span></span>
 
 The C<%s> will be replaced with the message. The effect is that the message
-will appear in bold red with an asterisk before it. This style can be overriden by simply
+will appear in bold red with an asterisk before it. This style can be overridden by simply
 defining "dfv_errors" appropriately in a style sheet, or by providing a new format string.
 
 Here's a more complex example that shows how to provide your own default message strings, as well
@@ -747,7 +753,7 @@ as providing custom messages per field, and handling multiple constraints:
      # Error messages, keyed by constraint name
      # Your constraints must be named to use this.
      constraints => {
-                     'date_and_time' => 'Not a vaild time format',
+                     'date_and_time' => 'Not a valid time format',
                      # ...
      },
  
@@ -777,8 +783,8 @@ receive as arguments an additional hash reference of control parameters,
 corresponding to the key names in the usually used in the C<msgs> area of the
 profile. You can ignore this information if you'd like. 
 
-If you have an alternative error message handler you'd like to share, 
-stick in the C<Data::FormValidator::ErrMsgs> and upload it to CPAN. 
+If you have an alternative error message handler you'd like to share, stick in
+the C<Data::FormValidator::ErrMsgs> name space and upload it to CPAN. 
 
 =head2 debug
 
@@ -826,7 +832,7 @@ have a value set to the reference of the subroutine or the name of a built-in
 validator.  Another required key is C<params>. The value of the C<params> key
 is a reference to an array of the other elements to use in the validation. If
 the element is a scalar, it is assumed to be a field name. The field is known
-to Data::FormValidator, the value will be filtered through any defined filteres
+to Data::FormValidator, the value will be filtered through any defined filters
 before it is passed in.  If the value is a reference, the reference is passed
 directly to the routine.  Don't forget to include the name of the field to
 check in that list, if you are using this syntax.
@@ -846,7 +852,7 @@ the constraint to be an array reference. Each of the values in this array can
 be any of the constraint types defined above.
 
 When using multiple constraints it is important to return the name of the
-constraint that failed so you can distinquish between them. To do that,
+constraint that failed so you can distinguish between them. To do that,
 either use a named constraint, or use the hash ref method of defining a
 constraint and include a C<name> key with a value set to the name of your
 constraint.  Here's an example:
@@ -895,87 +901,168 @@ sub _check_profile_syntax {
     (ref $profile eq 'HASH') or
         die "Invalid input profile: needs to be a hash reference\n";
 
-    my %valid_profile_keys = (
-		constraint_methods           => undef,
-		constraint_method_regexp_map => undef,
-		constraint_regexp_map        => undef,
-		constraints                  => undef,
-		defaults                     => undef,
-		defaults_regexp_map          => undef,
-		dependencies                 => undef,
-		dependency_groups            => undef,
-		field_filter_regexp_map      => undef,
-		field_filters                => undef,
-		filters                      => undef,
-		missing_optional_valid       => undef,
-		msgs                         => undef,
-		optional                     => undef,
-		optional_regexp              => undef,
-		require_some                 => undef,
-		required                     => undef,
-		required_regexp              => undef,
-		untaint_all_constraints      => undef,
-		validator_packages           => undef,
-		untaint_constraint_fields    => undef,
-		untaint_regexp_map           => undef,
-		debug                        => undef,
-    );
-
-    # If any of the keys in the profile are not listed as 
-    # valid keys here, we die with an error    
     my @invalid;
-    for my $key (keys %$profile) {
-        push @invalid, $key unless exists $valid_profile_keys{$key};
-    }
 
-    local $" = ', ';
-    if (@invalid) {
-        die "Invalid input profile: keys not recognised [@invalid]\n";
-    }
+    # check top level keys
+    { 
+        my @valid_profile_keys = (qw/
+            constraint_methods           
+            constraint_method_regexp_map 
+            constraint_regexp_map        
+            constraints                  
+            defaults                     
+            defaults_regexp_map          
+            dependencies                 
+            dependency_groups            
+            field_filter_regexp_map      
+            field_filters                
+            filters                      
+            missing_optional_valid       
+            msgs                         
+            optional                     
+            optional_regexp              
+            require_some                 
+            required                     
+            required_regexp              
+            untaint_all_constraints      
+            validator_packages           
+            untaint_constraint_fields    
+            untaint_regexp_map           
+            debug                        
+        /);
 
-    my %valid_constraint_hash_keys = (
-        constraint        => undef,
-        constraint_method => undef,
-        name              => undef,
-        params            => undef,
-    );
+        # If any of the keys in the profile are not listed as 
+        # valid keys here, we die with an error    
+        for my $key (keys %$profile) {
+            push @invalid, $key unless ($key eq any(@valid_profile_keys));
+        }
 
-    my @constraint_hashrefs = grep { ref $_ eq 'HASH' } values %{ $profile->{constraints} } 
-        if $profile->{constraints};
-    push @constraint_hashrefs, grep { ref $_ eq 'HASH' } values %{ $profile->{constraint_regexp_map} } 
-        if $profile->{constraint_regexp_map};
-
-    for my $href (@constraint_hashrefs) {
-        for my $key (keys %$href) {
-            push @invalid, $key unless exists $valid_constraint_hash_keys{$key};
+        local $" = ', ';
+        if (@invalid) {
+            die "Invalid input profile: keys not recognised [@invalid]\n";
         }
     }
 
-    if (@invalid) {
-        die "Invalid input profile: constraint hashref keys not recognised [@invalid]\n";
+    # Check that constraint_methods are always code refs or REs
+    {
+        # Cases:
+        # 1. constraint_methods          => { field      => func() }
+        # 2. constraint_methods          => { field      => [ func() ] } 
+        # 3. constraint_method_regex_map => { qr/^field/ => func()   }
+        # 4. constraint_method_regex_map => { qr/^field/ => [ func() ] }
+        # 5. constraint_methods => { field => { constraint_method => func() } }
+
+        # Could be improved by also naming the associated key for the bad value.
+        for my $key (grep { $profile->{$_} } qw/constraint_methods constraint_method_regexp_map/) {
+            for my $val (map { _arrayify($_) } values %{ $profile->{$key} }) {
+                if ((ref $val eq 'HASH') and ref $val->{constraint_method} eq none('CODE','Regexp'))  {
+                    die "Value for constraint_method within hashref '$val->{constraint_method}' not a code reference or Regexp . Do you need func(), not 'func'?";
+                }
+                # Cases 1 through 4. 
+                elsif (ref $val eq none('HASH','CODE','Regexp')) {
+                    die "Value for constraint_method '$val' not a code reference or Regexp . Do you need func(), not 'func'?";
+                }
+                # Case 5.
+                else {
+                    # We're cool. Nothing to do. 
+                }
+            }
+        }
     }
 
-	my %valid_msgs_hash_keys = (
-            prefix => undef,
-            missing => undef,
-            invalid => undef,
-            invalid_separator => undef,
-            invalid_seperator => undef,
-            format  => undef,
-            constraints  => undef,
-            any_errors => undef,
-	);
-	if (ref $profile->{msgs} eq 'HASH') {
-		for my $key (keys %{ $profile->{msgs} }) {
-			push @invalid, $key unless exists $valid_msgs_hash_keys{$key};
-		}
-	}
-    if (@invalid) {
-        die "Invalid input profile: msgs keys not recognized: [@invalid]\n";
+    # Check constraint hash keys
+    {
+        my @valid_constraint_hash_keys = (qw/
+            constraint        
+            constraint_method 
+            name              
+            params            
+        /);
+
+        my @constraint_hashrefs = grep { ref $_ eq 'HASH' } values %{ $profile->{constraints} } 
+            if $profile->{constraints};
+        push @constraint_hashrefs, grep { ref $_ eq 'HASH' } values %{ $profile->{constraint_regexp_map} } 
+            if $profile->{constraint_regexp_map};
+
+        for my $href (@constraint_hashrefs) {
+            for my $key (keys %$href) {
+                push @invalid, $key unless ($key eq any(@valid_constraint_hash_keys));
+            }
+        }
+
+        if (@invalid) {
+            die "Invalid input profile: constraint hashref keys not recognised [@invalid]\n";
+        }
     }
 
+    # Check msgs keys
+    {
+        my @valid_msgs_hash_keys = (qw/
+                prefix            
+                missing           
+                invalid           
+                invalid_separator 
+                invalid_seperator 
+                format            
+                constraints       
+                any_errors        
+        /);
+        if (ref $profile->{msgs} eq 'HASH') {
+            for my $key (keys %{ $profile->{msgs} }) {
+                push @invalid, $key unless ($key eq any(@valid_msgs_hash_keys));
+            }
+        }
+        if (@invalid) {
+            die "Invalid input profile: msgs keys not recognized: [@invalid]\n";
+        }
+    }
 
 }
+
+sub any  { return Data::FormValidator::Any->any(@_) }
+sub none { return Data::FormValidator::None->none(@_) }
+
+1;
+
+# Just what we need from Perl6::Junction::Any;
+# See Perl6::Junction for docs, details, tests, etc. 
+package Data::FormValidator::Any;
+ use overload( 
+    'eq'  => \&str_eq,
+ );
+ sub any {
+     my ($proto, @param) = @_;
+     return bless \@param, $proto;
+ }
+ 
+ sub str_eq {
+     my ($self, $test) = @_;
+     for (@$self) {
+         return 1 if $_ eq $test;
+     }
+     return;
+ }
+
+package Data::FormValidator::None;
+ use overload( 
+    'eq'  => \&str_eq,
+ );
+
+ sub none {
+     my ($class, @param) = @_;
+     return bless \@param, $class;
+ }
+
+ sub str_eq {
+    my ($self, $test) = @_;
+    
+    for (@$self) {
+        return if $_ eq $test;
+    }
+    
+    return 1;
+}
+
 
 
 
@@ -1178,7 +1265,7 @@ B<Document Translations:>
 
 Japanese: L<http://perldoc.jp/docs/modules/>
 
-B<Distributions which include Data::formValidator> 
+B<Distributions which include Data::FormValidator> 
 
 FreeBSD includes a port named B<p5-Data-FormValidator>
 

@@ -24,7 +24,7 @@ use overload
   'bool' => \&_bool_overload_based_on_success,
   fallback => 1;
 
-$VERSION = 4.49_01;
+$VERSION = 4.50;
 
 =pod
 
@@ -121,7 +121,7 @@ sub _process {
 		}
 	}
 
-	# Apply inconditional filters
+	# Apply unconditional filters
     foreach my $filter (_arrayify($profile->{filters})) {
 		if (defined $filter) {
 			# Qualify symbolic references
@@ -168,6 +168,9 @@ sub _process {
 			}	
 		}
 	}
+ 
+    # store the filtered data away for later use
+    $self->{__FILTERED_DATA} = \%valid;
  
     my %required    = map { $_ => 1 } _arrayify($profile->{required});
     my %optional    = map { $_ => 1 } _arrayify($profile->{optional});
@@ -218,7 +221,7 @@ sub _process {
 			if (ref($deps) eq 'HASH') {
 				foreach my $key (keys %$deps) {
                     # Handle case of a key with a single value given as an arrayref
-                    # There is probably a better, more general soution to this problem.
+                    # There is probably a better, more general solution to this problem.
                     my $val_to_compare;
                     if ((ref $valid{$field} eq 'ARRAY') and (scalar @{ $valid{$field} } == 1)) {
                         $val_to_compare = $valid{$field}->[0];
@@ -420,7 +423,7 @@ array ref if the field had multiple values:
 
  $value = $r->valid('field');
 
-If called with one argument in array conect, it returns the values of C<field> 
+If called with one argument in array context, it returns the values of C<field> 
 as an array:
 
  @values = $r->valid('field');
@@ -724,6 +727,11 @@ sub get_input_data {
     }
 }
 
+sub get_filtered_data {
+    my $self = shift;
+	return $self->{__FILTERED_DATA};
+}
+
 sub get_current_constraint_field {
 	my $self = shift;
 	return $self->{__CURRENT_CONSTRAINT_FIELD};
@@ -761,7 +769,7 @@ sub name_this {
 
 # INPUT: prefix_string, hash reference
 # Copies the hash and prefixes all keys with prefix_string
-# OUTPUT: hash refence
+# OUTPUT: hash reference
 sub prefix_hash {
 	my ($pre,$href) = @_;
 	die "prefix_hash: need two arguments" unless (scalar @_ == 2);
@@ -1068,7 +1076,7 @@ sub _get_input_as_hash {
 #	params => [ \'zoo' ]
 #  }
 #
-# Still, it's possble, the two bits of logic could be refactored into one location if you cared
+# Still, it's possible, the two bits of logic could be refactored into one location if you cared
 # to do that. 
 
 sub _create_regexp_common_constraint  {
@@ -1113,7 +1121,7 @@ sub _add_constraints_from_map {
 					my $new = $profile->{$map_name}{$re};
 					# If they already have an arrayref of constraints, add to the list
 					if (ref $cur eq 'ARRAY') {
-						push @{ $result{$key} }, $new;
+                        push @{ $result{$key} }, @$cur, $new;
 					} 
 					# If they have a single constraint defined, create an array ref with with this plus the new one
 					elsif ($cur) {

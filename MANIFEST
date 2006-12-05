@@ -40,11 +40,13 @@ t/ValidatorPackagesTest2.pm
 t/any_errors.t
 t/check_profile_syntax.t
 t/constraint_method.t
+t/constraint_method_string.t
 t/constraint_regexp_map_profile_reuse.t
 t/constraints_builtin.t
 t/constraints_builtin_closure.t
 t/constraints_factory.t
 t/constraints_invalid_once_only.t
+t/constraints_regexp_map_interaction.t
 t/constraints_reuse.t
 t/credit_card.t
 t/dates.t
@@ -53,6 +55,7 @@ t/dependency_groups.t
 t/filter_constraints.t
 t/filters_builtin.t
 t/filters_shouldnt_modify.t
+t/get_filtered_data.t
 t/get_input_data.t
 t/missing_optional.t
 t/msgs.t
