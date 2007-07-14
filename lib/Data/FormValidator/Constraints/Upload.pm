@@ -28,7 +28,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 	image_min_dimensions
 );
 
-$VERSION = 1.2;
+$VERSION = 1.22;
 
 sub file_format {
 	my %params = @_;
@@ -103,13 +103,17 @@ sub valid_file_format {
         # Work around a bug in File::MMagic (RT#12074)
         seek($fh,0,0);
 
+    # File::MMagic returns 'application/octet-stream" as a punt
+    # for "I don't know, here's a generic binary MIME type.
+    # In some cases that is has indicated a bug in File::MMagic,
+    # but it's a generally worthless response for identifying the file type.
+    # so, we throw away the response in that case. The uploaded MIME type
+    # will be used instead later, if present
+    $fm_mt = undef if ($fm_mt eq 'application/octet-stream');
+
+
 	## fetch mime type universally (or close) 
 	my $uploaded_mt = _get_upload_mime_type($self);
-
-   # XXX perhaps this should be in a global variable so it's easier
-   # for other apps to change the defaults;	
-   $params->{mime_types} ||= [qw!image/jpeg  image/pjpeg image/gif image/png!];
-   my %allowed_types = map { $_ => 1 } @{ $params->{mime_types} };
 
    # try the File::MMagic, then the uploaded field, then return undef we find neither
    my $mt = ($fm_mt || $uploaded_mt) or return undef;
@@ -146,8 +150,22 @@ sub valid_file_format {
    $info = { %$info, mime_type => $mt, extension => ".$ext" };
    $self->meta($field,$info);
 
-   return $allowed_types{$mt};
+   return _is_allowed_type($mt, $params);
 }
+
+## Returns true if the passed-in mime-type matches our allowed types
+sub _is_allowed_type {
+    my $mt     = shift;
+    my $params = shift;
+
+    # XXX perhaps this should be in a global variable so it's easier
+    # for other apps to change the defaults;
+    $params->{mime_types} ||= [qw!image/jpeg image/pjpeg image/gif image/png!];
+    my %allowed_types = map { $_ => 1 } @{ $params->{mime_types} };
+
+    return $allowed_types{lc $mt};
+} 
+
 
 sub valid_image_max_dimensions {
 	my $self = shift;

@@ -9,7 +9,9 @@ WriteMakefile
                            'File::MMagic' => '1.17',
                            'Image::Size' => '0',
                            'MIME::Types' => '1.005',
+                           'Perl6::Junction' => '1.1',
                            'Regexp::Common' => '0',
+                           'Scalar::Util' => '0',
                            'Test::More' => '0',
                            'overload' => '0'
                          },
