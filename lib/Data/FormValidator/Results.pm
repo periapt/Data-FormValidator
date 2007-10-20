@@ -14,7 +14,7 @@
 use strict;
 
 package Data::FormValidator::Results;
-use Perl6::Junction 'any';
+
 use Carp;
 use Symbol;
 use Data::FormValidator::Filters ':filters';
@@ -24,7 +24,7 @@ use overload
   'bool' => \&_bool_overload_based_on_success,
   fallback => 1;
 
-$VERSION = 4.51;
+$VERSION = 4.50;
 
 =pod
 
@@ -842,14 +842,13 @@ sub _arrayify {
    my $val = shift;
    defined $val or return ();
 
-   # if it's a reference, return an array unless it points to an empty array. -mls
    if ( ref $val eq 'ARRAY' ) {
-       $^W = 0; # turn off warnings about undef
-       return ( any(@$val) ne undef ) ? @$val : ();
+		# if it's a reference, return an array unless it points an empty array. -mls
+                return (defined $val->[0]) ? @$val : ();
    } 
-   # if it's a string, return an array unless the string is missing or empty. -mls
    else {
-       return (length $val) ? ($val) : ();
+		# if it's a string, return an array unless the string is missing or empty. -mls
+                return (length $val) ? ($val) : ();
    }
 }
 
@@ -1041,11 +1040,10 @@ sub _constraint_check_match {
 sub _get_input_as_hash {
 	my ($self,$data) = @_;
 	$self->{__INPUT_DATA} = $data;
+	require UNIVERSAL;
 
-	require Scalar::Util;
-
-	# This checks whether we have an object that supports param
-	if ( Scalar::Util::blessed($data) && $data->can('param') ) {
+    # This checks whether we have an object that supports param
+    if (UNIVERSAL::can($data,'param') ) {
 		my %return;
 		foreach my $k ($data->param()){
 			# we expect param to return an array if there are multiple values
