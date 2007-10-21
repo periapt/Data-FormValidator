@@ -431,7 +431,7 @@ INPUT PROFILE SPECIFICATION
     Untainting is based on the pattern match used by the constraint. Note
     that some constraint routines may not provide untainting.
 
-    See "WRITING YOUR OWN CONSTRAINT ROUTINES" in the
+    See Writing your own constraint routines in the
     Data::FormValidator::Constraints documentation for more information.
 
     This is overridden by "untaint_constraint_fields" and

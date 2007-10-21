@@ -25,6 +25,7 @@ package Data::FormValidator;
 
 use 5.005; # for "qr" support, which isn't strictly required. 
 
+use Perl6::Junction qw(any none);
 use Data::FormValidator::Results;
 *_arrayify = \&Data::FormValidator::Results::_arrayify;
 use Data::FormValidator::Filters ':filters';
@@ -32,7 +33,7 @@ use Data::FormValidator::Constraints qw(:validators :matchers);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '4.50';
+$VERSION = '4.54';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -653,7 +654,7 @@ The untainted data will be returned in the valid hash.  Untainting is based on
 the pattern match used by the constraint.  Note that some constraint routines
 may not provide untainting.
 
-See L<WRITING YOUR OWN CONSTRAINT ROUTINES> in the Data::FormValidator::Constraints
+See L<Writing your own constraint routines|Data::FormValidator::Constraints/"WRITING YOUR OWN CONSTRAINT ROUTINES"> in the Data::FormValidator::Constraints
 documentation for more information.
 
 This is overridden by C<untaint_constraint_fields> and C<untaint_regexp_map>.
@@ -1019,53 +1020,6 @@ sub _check_profile_syntax {
 
 }
 
-sub any  { return Data::FormValidator::Any->any(@_) }
-sub none { return Data::FormValidator::None->none(@_) }
-
-1;
-
-# Just what we need from Perl6::Junction::Any;
-# See Perl6::Junction for docs, details, tests, etc. 
-package Data::FormValidator::Any;
- use overload( 
-    'eq'  => \&str_eq,
- );
- sub any {
-     my ($proto, @param) = @_;
-     return bless \@param, $proto;
- }
- 
- sub str_eq {
-     my ($self, $test) = @_;
-     for (@$self) {
-         return 1 if $_ eq $test;
-     }
-     return;
- }
-
-package Data::FormValidator::None;
- use overload( 
-    'eq'  => \&str_eq,
- );
-
- sub none {
-     my ($class, @param) = @_;
-     return bless \@param, $class;
- }
-
- sub str_eq {
-    my ($self, $test) = @_;
-    
-    for (@$self) {
-        return if $_ eq $test;
-    }
-    
-    return 1;
-}
-
-
-
-
 
 1;
 
@@ -1318,5 +1272,6 @@ This program is free software; you can redistribute it and/or modify
 it under the terms as perl itself.
 
 =cut
+
 
 

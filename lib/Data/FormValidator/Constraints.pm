@@ -23,7 +23,7 @@ package Data::FormValidator::Constraints;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = 4.50;
+$VERSION = 4.51;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -58,9 +58,9 @@ BEGIN {
             sub $func  {
                 return sub {
                     my \$dfv = shift;
-                    use UNIVERSAL qw( can ) ;
-                    can(\$dfv, "name_this") 
-                    || die "first arg to $func was not an object. Must be called as a constraint_method.";
+		    use Scalar::Util ();
+        	    die "first arg to $func was not an object. Must be called as a constraint_method."
+		    	unless ( Scalar::Util::blessed(\$dfv) && \$dfv->can('name_this') );
 
                     \$dfv->name_this('$func');
                     no strict 'refs';
@@ -953,6 +953,9 @@ and the names were given as strings, like this:
 
 =item L<Data::FormValidator::Constraints::Japanese> - Japan-specific constraints
 
+=item L<Data::FormValidator::Constraints::MethodsFactory> - a useful collection of tools generate more complex constraints. Recommended!
+    
+
 =back
 
 =head2 Related modules in this package
@@ -962,6 +965,7 @@ and the names were given as strings, like this:
 =item L<Data::FormValidator::Filters> - transform data before constraints are applied
 
 =item L<Data::FormValidator::ConstraintsFactory> - This is a historical collection of constraints that suffer from cumbersome names. They are worth reviewing though-- C<make_and_constraint> will allow to validate against a list of constraints and shortcircuit if the first one fails. That's perfect if the second constraint depends on the first one having passed.
+For a modern version of this toolkit, see L<Data::FormValidator::Constraints::MethodsFactory>.
 
 =item L<Data::FormValidator>
 
