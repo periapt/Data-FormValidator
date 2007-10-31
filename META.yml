@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Data-FormValidator
-version: 4.55
+version: 4.56
 author:
   - Mark Stosberg <mark@summersault.com>
 abstract: |-
@@ -17,10 +17,11 @@ requires:
   Scalar::Util: 0
   Test::More: 0
   overload: 0
+  perl: 5.008
 provides:
   Data::FormValidator:
     file: lib/Data/FormValidator.pm
-    version: 4.55
+    version: 4.56
   Data::FormValidator::Constraints:
     file: lib/Data/FormValidator/Constraints.pm
     version: 4.51
