@@ -275,7 +275,7 @@ sub FV_length_between {
     return sub {
         my ($dfv,$value) = @_;
         $dfv->name_this('length_between');
-        my ($match) = ($value =~ m/^(.{$min,$max})$/);
+        my ($match) = ($value =~ m/\A(.{$min,$max})\z/xms);
         return $dfv->untainted_constraint_value($match);
     }
 }
@@ -286,7 +286,7 @@ sub FV_max_length {
     return sub {
         my ($dfv,$value) = @_;
         $dfv->name_this('max_length');
-        my ($match) = ($value =~ m/^(.{0,$max}$)/);
+        my ($match) = ($value =~ m/\A(.{0,$max})\z/xms);
         return $dfv->untainted_constraint_value($match);
     }
 }
@@ -297,7 +297,7 @@ sub FV_min_length {
     return sub {
         my ($dfv,$value) = @_;
         $dfv->name_this('min_length');
-        my ($match) = ($value =~ m/^(.{$min,})$/);
+        my ($match) = ($value =~ m/\A(.{$min,})\z/xms);
         return $dfv->untainted_constraint_value($match);
     }
 }
@@ -724,8 +724,7 @@ untainted value, you'll need to prefix the validator name with "match_"
 
 =head2 New School Constraints Overview
 
-This is the current recommended way to write constraints. See also L<Old School
-Constraints>.
+This is the current recommended way to write constraints. See also L<Old School Constraints>.
 
 The most flexible way to create constraints to use closures-- a normal seeming
 outer subroutine which returns a customized DFV method subroutine as a result.
@@ -775,6 +774,7 @@ Here's what the code might look like:
 	}
   }
 
+=head2 Old School Constraints
 
 Here is documentation on how old school constraints are created. These are
 supported, but the the new school style documented above is recommended. 
