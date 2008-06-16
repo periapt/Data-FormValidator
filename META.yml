@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name: Data-FormValidator
-version: 4.60
+version: 4.61
 author:
   - Mark Stosberg <mark@summersault.com>
 abstract: |-
@@ -9,7 +9,7 @@ abstract: |-
 license: perl
 requires:
   Date::Calc: 5
-  Email::Valid: 1
+  Email::Valid: 0
   File::MMagic: 1.17
   Image::Size: 0
   MIME::Types: 1.005
@@ -22,7 +22,7 @@ requires:
 provides:
   Data::FormValidator:
     file: lib/Data/FormValidator.pm
-    version: 4.60
+    version: 4.61
   Data::FormValidator::Constraints:
     file: lib/Data/FormValidator/Constraints.pm
     version: 4.6
@@ -44,19 +44,4 @@ provides:
   Data::FormValidator::Results:
     file: lib/Data/FormValidator/Results.pm
     version: 4.6
-  Perl6::Junction:
-    file: lib/Perl6/Junction.pm
-    version: 1.10
-  Perl6::Junction::All:
-    file: lib/Perl6/Junction/All.pm
-    version: 1.10
-  Perl6::Junction::Any:
-    file: lib/Perl6/Junction/Any.pm
-    version: 1.10
-  Perl6::Junction::None:
-    file: lib/Perl6/Junction/None.pm
-    version: 1.10
-  Perl6::Junction::One:
-    file: lib/Perl6/Junction/One.pm
-    version: 1.10
 generated_by: Module::Build version 0.2611
