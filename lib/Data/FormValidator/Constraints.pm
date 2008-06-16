@@ -23,7 +23,7 @@ package Data::FormValidator::Constraints;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = 4.51;
+$VERSION = 4.60;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -261,6 +261,8 @@ corresponding to the function name you choose.
 
 The checks are all inclusive, so a max length of '100' will allow the length 100. 
 
+Length is measured in perl characters as opposed to bytes or anything else.
+
 This constraint I<will> untaint your data if you have untainting turned on. However,
 a length check alone may not be enough to insure the safety of the data you are receiving.
 Using additional constraints to check the data is encouraged. 
@@ -275,8 +277,10 @@ sub FV_length_between {
     return sub {
         my ($dfv,$value) = @_;
         $dfv->name_this('length_between');
-        my ($match) = ($value =~ m/\A(.{$min,$max})\z/xms);
-        return $dfv->untainted_constraint_value($match);
+        return undef if ( ( length($value) > $max ) || ( length($value) < $min) );
+        # Use a regexp to untaint
+        $value=~/(.*)/;
+        return $dfv->untainted_constraint_value($1);
     }
 }
 
@@ -286,8 +290,10 @@ sub FV_max_length {
     return sub {
         my ($dfv,$value) = @_;
         $dfv->name_this('max_length');
-        my ($match) = ($value =~ m/\A(.{0,$max})\z/xms);
-        return $dfv->untainted_constraint_value($match);
+        return undef if ( length($value) > $max );
+        # Use a regexp to untaint
+        $value=~/(.*)/;
+        return $dfv->untainted_constraint_value($1);
     }
 }
 
@@ -297,8 +303,10 @@ sub FV_min_length {
     return sub {
         my ($dfv,$value) = @_;
         $dfv->name_this('min_length');
-        my ($match) = ($value =~ m/\A(.{$min,})\z/xms);
-        return $dfv->untainted_constraint_value($match);
+        return undef if ( length($value) < $min );
+        # Use a regexp to untaint
+        $value=~/(.*)/;
+        return $dfv->untainted_constraint_value($1);
     }
 }
 
@@ -348,13 +356,19 @@ that is valid in the RFC, or runs out and checks some MX records.
 # Copyright 1996-1999 by Michael J. Heins <mike@heins.net>
 
 sub match_email {
-    my $email = shift;
+    my $in_email = shift;
 
-    if ($email =~ /^(([a-z0-9_\.\+\-\=\?\^\#]){1,64}\@(([a-z0-9\-]){1,251}\.){1,252}[a-z0-9]{2,4})$/i) {
-	    return $1;
+    require Email::Valid;
+    my $valid_email; 
+
+    # The extra check that the result matches the input prevents
+    # an address like this from being considered valid: Joe Smith <joe@smith.com>
+    if (    ($valid_email = Email::Valid->address($in_email) )
+        and ($valid_email eq $in_email)) { 
+        return $valid_email;
     }
-    else { 
-        return undef; 
+    else {
+        return undef;
     }
 }
 
@@ -736,7 +750,7 @@ Let's look at an example.
   # Near your profile	
   # Of course, you don't have to export/import if your constraints are in the same
   # package as the profile.  
-  use My::Constraints qw(coolness);
+  use My::Constraints 'coolness';
 
   # In your profile
   constraint_methods => {
@@ -769,7 +783,7 @@ Here's what the code might look like:
 		# get other data to refer to
 	    my $data = $dfv->get_filtered_data;
 
-	    my $has_all_three = ($data->{personality} && $data->{smarts} && $data->{looks});
+	    my $has_all_three = ($data->{$personality} && $data->{$smarts} && $data->{$looks});
 		return ( ($val >= $min_cool) && ($val <= $max_cool) && $has_all_three );
 	}
   }

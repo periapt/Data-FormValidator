@@ -1,3 +1,27 @@
+4.60 Mon Jun 16 14:10:14 EDT 2008
+
+    [NEW FEATURES]
+    - Dependencies can now be specified using a code ref.
+      Thanks to Bradley C Bailey, via RT#24935.
+
+    [BUG FIXES]
+    - length constraints for min, max and 'between' now work for lengths
+       of 32k and longer. (Carl Vincent). 
+    - We now use Email::Valid to validate e-mail addresses instead of
+      our own regrex. Email::Valid passed all our our existing regression
+      tests for e-mail addresses that should pass and fail. Email::Valid
+      also correctly recognizes emails with single quote characters in them.
+      These are valid, but our regex didn't recognize them.  (Mark Stosberg)
+
+    [INTERNALS]
+    - Typo in Constraints documentation corrected by K B Shiv Kumar (RT#32358)
+    - Add some tests and docs for "date_and_time" constraint, from
+      Data::FormValidator:::Constraints::Dates.  It appears  there may still
+      exist a leap-year bug with the date parser. See the TODO test in
+      t/dates_closure.t for details. An alternative is to use
+      Data::FormValidator::Constraints::DateTime 
+      (Mark Stosberg, Matt Christian)
+
 4.57 Thu Nov  1 22:47:13 EDT 2007
     [BUG FIXES]
     - The min max and length_between constraints now allow multi-line input, 

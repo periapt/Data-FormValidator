@@ -2,8 +2,6 @@ Build.PL
 Changes
 MANIFEST			This list of files
 MANIFEST.SKIP
-META.yml
-Makefile.PL
 README
 RELEASE_NOTES
 lib/Data/FormValidator.pm
@@ -13,6 +11,11 @@ lib/Data/FormValidator/Constraints/Upload.pm
 lib/Data/FormValidator/ConstraintsFactory.pm
 lib/Data/FormValidator/Filters.pm
 lib/Data/FormValidator/Results.pm
+lib/Perl6/Junction.pm
+lib/Perl6/Junction/All.pm
+lib/Perl6/Junction/Any.pm
+lib/Perl6/Junction/None.pm
+lib/Perl6/Junction/One.pm
 t/00_base.t
 t/02_code_ref.t
 t/03_dependency.t
@@ -51,6 +54,7 @@ t/constraints_reuse.t
 t/credit_card.t
 t/dates.t
 t/dates_closure.t
+t/dependency_coderef.t
 t/dependency_groups.t
 t/filter_constraints.t
 t/filters_builtin.t
@@ -75,6 +79,8 @@ t/untaint.pl
 t/untaint.t
 t/upload.t
 t/upload_closure.t
+t/upload_mime_types.t
 t/upload_post_text.txt
 test/00_base.badformat
 test/00_base.profile
+META.yml

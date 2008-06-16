@@ -24,7 +24,7 @@ use overload
   'bool' => \&_bool_overload_based_on_success,
   fallback => 1;
 
-$VERSION = 4.55;
+$VERSION = 4.60;
 
 =pod
 
@@ -237,6 +237,15 @@ sub _process {
 					}
 				}
 			}
+            elsif (ref $deps eq "CODE") {
+                for my $val (_arrayify($valid{$field})) {
+                    my $returned_deps = $deps->($self, $val);
+                
+                    for my $dep (_arrayify($returned_deps)) {
+                        $required{$dep} = 1;
+                    }
+                }
+            }
             else {
                 for my $dep (_arrayify($deps)){
                     $required{$dep} = 1;
