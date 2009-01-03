@@ -1,3 +1,16 @@
+
+4.62 Sat Jan  3 12:10:14 EST 2009
+
+    [DOCUMENTATION]
+    - Fix typo in ConstraintsFactory docs (Geraint A. Edwards)
+    - Clarified docs for get_filtered_data (Lisa Hagemann)
+    - Clarify that 'field_filter_regexp_map' can take coderefs as values (Ron Savage)
+
+    [INTERNALS]
+    - Better diagnostics when load_profiles fails (Thoralf Klein)
+    - Improved portability of t/untaint.t (Alexandr Ciornii)
+    - Make some tests conditional on Date::Calc being installed (Frank Wiles)
+
 4.61 Mon Jun 16 14:37:31 EDT 2008
 
     [INTERNALS]

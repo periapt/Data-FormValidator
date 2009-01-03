@@ -33,7 +33,7 @@ use Data::FormValidator::Constraints qw(:validators :matchers);
 
 use vars qw( $VERSION $AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS );
 
-$VERSION = '4.61';
+$VERSION = '4.62';
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -551,10 +551,11 @@ See L<Data::FormValidator::Filters> for details on the built-in filters.
      qr/_name$/    => ['ucfirst'],
  },
 
-This is a hash reference where the keys are the regular expressions to
-use and the values are references to arrays of filters which will be
-applied to specific input fields. Used to apply filters to fields that
-match a regular expression. 
+'field_filter_regexp_map' is used to apply filters to fields that match a
+regular expression.  This is a hash reference where the keys are the regular
+expressions to use and the values are references to arrays of filters which
+will be applied to specific input fields. Just as with 'field_filters', you
+can you use a built-in filter or use a coderef to supply your own.
 
 =head2 constraint_methods
 
@@ -901,7 +902,7 @@ sub load_profiles {
     return if $self->{profiles} and $self->{profiles_mtime} <= $mtime;
 
     $self->{profiles} = do $file;
-    die "Input profiles didn't return a hash ref\n"
+    die "Input profiles didn't return a hash ref: $@\n"
       unless ref $self->{profiles} eq "HASH";
 
     $self->{profiles_mtime} = $mtime;

@@ -23,7 +23,7 @@ package Data::FormValidator::Constraints;
 use strict;
 use vars qw/$AUTOLOAD @ISA @EXPORT_OK %EXPORT_TAGS $VERSION/;
 
-$VERSION = 4.60;
+$VERSION = 4.62;
 
 require Exporter;
 @ISA = qw(Exporter);
@@ -851,7 +851,7 @@ B<Examples:>
 
  my $data = $self->get_filtered_data;
 
-Returns the filtered data as a hashref, regardless of whether
+Returns the valid filtered data as a hashref, regardless of whether
 it started out as a CGI.pm compatible object. Multiple values are 
 expressed as array references. 
 

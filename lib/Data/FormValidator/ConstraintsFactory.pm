@@ -37,7 +37,7 @@ instead. It's a modern alternative to what's here, offering improved names and s
 		    make_num_set_constraint( -1, ( 1 .. 10 ) ),
 		    make_set_constraint( 1, ( 20 .. 30 ) ),
 		  ),
-	province => make_word_set_constraint( "AB QC ON TN NU" ),
+	province => make_word_set_constraint( 1, "AB QC ON TN NU" ),
 	bid	 => make_range_constraint( 1, 1, 10 ),
     }
 
@@ -48,7 +48,7 @@ use vars qw( $VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS );
 BEGIN {
     require Exporter;
 
-    $VERSION = 1.6; 
+    $VERSION = 1.7; 
 
     @ISA = qw( Exporter );
 
